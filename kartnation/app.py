@@ -1,14 +1,24 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import sqlite3, hashlib, secrets, smtplib
+import sqlite3, hashlib, secrets, smtplib, os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, date, timedelta
 import json
 from functools import wraps
+from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = 'kartnation_secret_key_2024'
+app.secret_key = os.environ.get('SECRET_KEY', 'kartnation_secret_key_2024')
 DB_PATH = 'kartodromo.db'
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', ''),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 EMAIL_CONFIG = {
     'SMTP_SERVER': 'smtp.gmail.com',
@@ -182,6 +192,11 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
+
+    # Add google_id column for OAuth users
+    try:
+        c.execute('ALTER TABLE users ADD COLUMN google_id TEXT')
+    except: pass
 
     # Add columns to existing tables if missing
     for col, defval in [('is_admin','INTEGER DEFAULT 0'), ('website','TEXT'), ('address','TEXT')]:
@@ -1992,6 +2007,86 @@ def pitlane_logout():
     session.pop('circuit_username', None)
     flash('Sesión cerrada.', 'info')
     return redirect(url_for('pitlane'))
+
+@app.route('/auth/google')
+def google_login():
+    if not os.environ.get('GOOGLE_CLIENT_ID'):
+        flash('El inicio de sesión con Google no está configurado.', 'error')
+        return redirect(url_for('login'))
+    redirect_uri = url_for('google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth/google/callback')
+def google_callback():
+    if not os.environ.get('GOOGLE_CLIENT_ID'):
+        flash('El inicio de sesión con Google no está configurado.', 'error')
+        return redirect(url_for('login'))
+    try:
+        token = google.authorize_access_token()
+    except Exception:
+        flash('Error al autenticar con Google. Inténtalo de nuevo.', 'error')
+        return redirect(url_for('login'))
+
+    userinfo = token.get('userinfo')
+    if not userinfo:
+        flash('No se pudo obtener información de Google.', 'error')
+        return redirect(url_for('login'))
+
+    google_id = userinfo.get('sub')
+    email = userinfo.get('email', '')
+    given_name = userinfo.get('given_name', '')
+    family_name = userinfo.get('family_name', '')
+
+    conn = get_db()
+
+    # Existing Google-linked user
+    user = conn.execute('SELECT * FROM users WHERE google_id=?', (google_id,)).fetchone()
+    if user:
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['is_admin'] = bool(user['is_admin'])
+        conn.close()
+        flash(f'Bienvenido, {user["full_name"].split()[0]}!', 'success')
+        return redirect(url_for('admin_panel') if user['is_admin'] else url_for('index'))
+
+    # Email already registered — link Google account
+    user = conn.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    if user:
+        conn.execute('UPDATE users SET google_id=? WHERE id=?', (google_id, user['id']))
+        conn.commit()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['is_admin'] = bool(user['is_admin'])
+        conn.close()
+        flash(f'Bienvenido, {user["full_name"].split()[0]}! Cuenta vinculada con Google.', 'success')
+        return redirect(url_for('admin_panel') if user['is_admin'] else url_for('index'))
+
+    # New user — create account from Google data
+    username_base = email.split('@')[0] if email else 'piloto'
+    username = username_base
+    suffix = 1
+    while conn.execute('SELECT id FROM users WHERE username=?', (username,)).fetchone():
+        username = f'{username_base}{suffix}'
+        suffix += 1
+
+    avatar_initial = given_name[0].upper() if given_name else (email[0].upper() if email else 'P')
+    try:
+        conn.execute('''INSERT INTO users
+            (username, email, password_hash, full_name, apellido, avatar_initial, google_id)
+            VALUES (?,?,?,?,?,?,?)''',
+            (username, email, '', given_name or username, family_name, avatar_initial, google_id))
+        conn.commit()
+        user = conn.execute('SELECT * FROM users WHERE google_id=?', (google_id,)).fetchone()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['is_admin'] = False
+        conn.close()
+        flash(f'Bienvenido a KARTNATION, {given_name or username}! Completa tu perfil.', 'success')
+        return redirect(url_for('profile'))
+    except sqlite3.IntegrityError:
+        conn.close()
+        flash('Error al crear la cuenta. El email ya está en uso.', 'error')
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     init_db()
