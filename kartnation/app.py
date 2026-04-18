@@ -800,6 +800,9 @@ def register():
 
 @app.route('/admin-login', methods=['GET','POST'])
 def admin_login():
+    if session.get('user_id') and not session.get('is_admin'):
+        flash('Debes cerrar sesión como piloto antes de acceder al panel de administración.', 'error')
+        return redirect(url_for('index'))
     if request.method == 'POST':
         username = request.form['username'].strip()
         password = request.form['password']
@@ -1627,6 +1630,9 @@ def pitlane_required(f):
 
 @app.route('/pitlane', methods=['GET','POST'])
 def pitlane():
+    if session.get('user_id') and not session.get('is_admin'):
+        flash('Debes cerrar sesión como piloto antes de acceder al área de pitlane.', 'error')
+        return redirect(url_for('index'))
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'login':
