@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}PitLane — Portal de Circuitos{% endblock %}
+
+{% block head %}
+<style>
+    .pitlane-wrapper {
+        min-height: calc(100vh - 60px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .pitlane-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -150px; left: 50%;
+        transform: translateX(-50%);
+        width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .pitlane-container {
+        width: 100%;
+        max-width: 900px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    @media (max-width: 700px) {
+        .pitlane-container { grid-template-columns: 1fr; }
+    }
+    .pitlane-brand {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-right: 2rem;
+    }
+    .brand-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 0.75rem;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .brand-eyebrow::before {
+        content: ''; display: inline-block;
+        width: 24px; height: 2px; background: var(--accent);
+    }
+    .brand-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 4rem; letter-spacing: 0.03em; line-height: 0.95;
+        margin-bottom: 1rem;
+    }
+    .brand-title span { color: var(--accent); }
+    .brand-desc {
+        font-size: 0.9rem; color: var(--text-muted); line-height: 1.7;
+        margin-bottom: 2rem;
+    }
+    .brand-features { display: flex; flex-direction: column; gap: 0.5rem; }
+    .brand-feature {
+        display: flex; align-items: center; gap: 0.6rem;
+        font-size: 0.85rem; color: var(--text-muted);
+    }
+    .brand-feature::before {
+        content: '→'; color: var(--accent); font-weight: 700; flex-shrink: 0;
+    }
+    .auth-panel {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+    .auth-panel-top { height: 4px; background: var(--accent); }
+    .auth-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+    }
+    .auth-tab {
+        flex: 1; padding: 1rem;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.82rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-muted); background: none; border: none;
+        cursor: pointer; transition: all 0.2s;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+    }
+    .auth-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        background: rgba(255,77,0,0.04);
+    }
+    .auth-body { padding: 1.75rem; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pitlane-wrapper">
+    <div class="pitlane-container">
+
+        <!-- BRAND -->
+        <div class="pitlane-brand">
+            <div class="brand-eyebrow">Portal de circuitos</div>
+            <h1 class="brand-title">PIT<span>LANE</span></h1>
+            <p class="brand-desc">
+                El panel exclusivo para kartódromos asociados a KARTNATION.
+                Gestiona tu presencia, tus tandas y conecta con miles de pilotos.
+            </p>
+            <div class="brand-features">
+                <div class="brand-feature">Visibilidad en la plataforma</div>
+                <div class="brand-feature">Gestión de reservas en tiempo real</div>
+                <div class="brand-feature">Estadísticas de pilotos y tandas</div>
+                <div class="brand-feature">Herramientas de promoción</div>
+            </div>
+        </div>
+
+        <!-- AUTH PANEL -->
+        <div class="auth-panel">
+            <div class="auth-panel-top"></div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Iniciar sesión</button>
+                <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Registrarse</button>
+            </div>
+            <div class="auth-body">
+
+                <!-- LOGIN -->
+                <form class="auth-form active" id="formLogin" method="POST" action="{{ url_for('pitlane') }}">
+                    <input type="hidden" name="action" value="login">
+                    <div class="form-group">
+                        <label for="login_username">Usuario del circuito</label>
+                        <input type="text" id="login_username" name="username" placeholder="username_circuito" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="login_password">Contraseña</label>
+                        <input type="password" id="login_password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
+                        Acceder al panel →
+                    </button>
+                </form>
+
+                <!-- REGISTER -->
+                <form class="auth-form" id="formRegister" method="POST" action="{{ url_for('pitlane') }}">
+                    <input type="hidden" name="action" value="register">
+                    <div class="form-group">
+                        <label for="reg_circuit_name">Nombre del circuito <span style="color:var(--accent)">*</span></label>
+                        <input type="text" id="reg_circuit_name" name="circuit_name" placeholder="Karting Barcelona..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_city">Población <span style="color:var(--accent)">*</span></label>
+                        <input type="text" id="reg_city" name="city" placeholder="Barcelona" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_username">Usuario de acceso <span style="color:var(--accent)">*</span></label>
+                        <input type="text" id="reg_username" name="username" placeholder="username_circuito" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_password">Contraseña <span style="color:var(--accent)">*</span></label>
+                        <input type="password" id="reg_password" name="password" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
+                        Crear cuenta de circuito
+                    </button>
+                    <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.75rem;line-height:1.5;">
+                        El registro es provisional. Un administrador de KARTNATION revisará y activará tu cuenta.
+                    </p>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    document.getElementById('formLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('formRegister').classList.toggle('active', tab === 'register');
+}
+</script>
+{% endblock %}

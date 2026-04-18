@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil — KARTNATION{% endblock %}
+
+{% block head %}
+<style>
+    .profile-header {
+        padding: 3rem 0 2rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, {{ level_info.color }}15 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .profile-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: {{ level_info.color }}22;
+        border: 2px solid {{ level_info.color }}60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.5rem;
+        color: {{ level_info.color }};
+        flex-shrink: 0;
+    }
+
+    .profile-name {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.5rem;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-username {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .profile-level-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: {{ level_info.color }}15;
+        border: 1px solid {{ level_info.color }}40;
+        border-radius: 50px;
+        padding: 0.35rem 0.9rem;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: {{ level_info.color }};
+    }
+
+    .profile-stats-bar {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .pstat {
+        text-align: center;
+        min-width: 80px;
+    }
+
+    .pstat-val {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2rem;
+        line-height: 1;
+        color: {{ level_info.color }};
+    }
+
+    .pstat-label {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-top: 0.2rem;
+    }
+
+    /* ── CONTENT LAYOUT ── */
+    .profile-layout {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 800px) {
+        .profile-layout { grid-template-columns: 1fr; }
+    }
+
+    .section-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.03em;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+
+    /* ── BOOKING CARDS ── */
+    .booking-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        transition: border-color 0.2s;
+    }
+
+    .booking-card:hover { border-color: var(--border-bright); }
+
+    .booking-circuit-dot {
+        width: 4px;
+        height: 48px;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .booking-info { flex: 1; min-width: 0; }
+
+    .booking-circuit-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .booking-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .booking-status {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: 2px;
+    }
+
+    .status-confirmed { color: #fff; background: rgba(255,255,255,0.08); }
+    .status-past { color: var(--text-dim); background: rgba(255,255,255,0.03); }
+
+    .booking-time-badge {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.4rem;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--card-bg);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius-lg);
+    }
+
+    .empty-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+
+    /* ── SIDEBAR CARDS ── */
+    .info-sidebar-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-sidebar-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-row-label { color: var(--text-muted); }
+    .info-row-val { font-weight: 600; }
+
+    .level-progress {
+        margin-top: 0.5rem;
+    }
+
+    .level-bar-bg {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 0.4rem;
+    }
+
+    .level-bar-fill {
+        height: 100%;
+        background: {{ level_info.color }};
+        border-radius: 3px;
+        transition: width 1s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- PROFILE HEADER -->
+    <section class="profile-header">
+        <div class="profile-main">
+            <div class="profile-avatar">{{ user.avatar_initial }}</div>
+            <div style="flex:1;">
+                <div class="profile-name">{{ user.full_name }} {{ user.apellido or '' }}</div>
+                <div class="profile-username">@{{ user.username }} · {{ user.email }}</div>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;">
+                    <div class="profile-level-pill">
+                        {{ user.karting_level }}
+                    </div>
+                    {% if user.teléfono %}
+                    <span style="font-size:0.82rem;color:var(--text-muted);">📞 {{ user.teléfono }}</span>
+                    {% endif %}
+                    {% if user.fecha_nacimiento %}
+                    <span style="font-size:0.82rem;color:var(--text-muted);">🎂 {{ user.fecha_nacimiento }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <a href="{{ url_for('profile_edit') }}" class="btn btn-secondary btn-sm" style="align-self:flex-start;white-space:nowrap;">
+                ✏️ Editar perfil
+            </a>
+        </div>
+
+        <div class="profile-stats-bar">
+            <div class="pstat">
+                <div class="pstat-val">{{ bookings|length }}</div>
+                <div class="pstat-label">Tandas totales</div>
+            </div>
+            <div class="pstat">
+                <div class="pstat-val">{{ bookings|selectattr('booking_date', 'ge', today)|list|length }}</div>
+                <div class="pstat-label">Próximas</div>
+            </div>
+            <div class="pstat">
+                <div class="pstat-val">{{ user.races_completed }}</div>
+                <div class="pstat-label">Carreras</div>
+            </div>
+            <div class="pstat">
+                <div class="pstat-val">{{ user.experience_years or 0 }}</div>
+                <div class="pstat-label">Años exp.</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="profile-layout">
+        <!-- BOOKINGS -->
+        <div>
+            <h2 class="section-title">Mis reservas</h2>
+
+            {% set upcoming = bookings|selectattr('booking_date', 'ge', today)|list %}
+            {% set past = bookings|selectattr('booking_date', 'lt', today)|list %}
+
+            {% if bookings %}
+                {% if upcoming %}
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);margin-bottom:0.75rem;">
+                    Próximas ({{ upcoming|length }})
+                </div>
+                {% for booking in upcoming %}
+                <div class="booking-card">
+                    <div class="booking-circuit-dot" style="background:var(--green);"></div>
+                    <div class="booking-info">
+                        <div class="booking-circuit-name">{{ booking.circuit_name }}</div>
+                        <div class="booking-meta">
+                            <span>📍 {{ booking.location }}</span>
+                            <span>📅 {{ booking.booking_date }}</span>
+                            <span class="booking-status status-confirmed">Confirmada</span>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="booking-time-badge">{{ booking.time_slot }}</div>
+                        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.3rem;">{{ "%.2f"|format(booking.price_per_session) }}€</div>
+                        <form method="POST" action="{{ url_for('cancel_booking', booking_id=booking.id) }}" 
+                              onsubmit="return confirm('¿Cancelar esta reserva?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Cancelar</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if past %}
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin:1.5rem 0 0.75rem;">
+                    Historial ({{ past|length }})
+                </div>
+                {% for booking in past[:10] %}
+                <div class="booking-card" style="opacity:0.6;">
+                    <div class="booking-circuit-dot" style="background:{{ booking.color }};opacity:0.5;"></div>
+                    <div class="booking-info">
+                        <div class="booking-circuit-name">{{ booking.circuit_name }}</div>
+                        <div class="booking-meta">
+                            <span>📍 {{ booking.location }}</span>
+                            <span>📅 {{ booking.booking_date }}</span>
+                            <span class="booking-status status-past">Completada</span>
+                        </div>
+                    </div>
+                    <div class="booking-time-badge">{{ booking.time_slot }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🏎️</div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;margin-bottom:0.5rem;">Sin reservas aún</div>
+                <p style="color:var(--text-muted);margin-bottom:1.5rem;">¡Elige un circuito y reserva tu primera tanda!</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Ver circuitos disponibles</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- SIDEBAR -->
+        <div>
+            <div class="info-sidebar-card">
+                <div class="info-sidebar-title">Datos del piloto</div>
+                <div class="info-row">
+                    <span class="info-row-label">Nombre completo</span>
+                    <span class="info-row-val">{{ user.full_name }} {{ user.apellido or '' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row-label">Fecha nacimiento</span>
+                    <span class="info-row-val">{{ user.fecha_nacimiento or '—' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row-label">Teléfono</span>
+                    <span class="info-row-val">{{ user.teléfono or '—' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row-label">DNI / NIE</span>
+                    <span class="info-row-val" style="{% if not user.dni %}color:var(--accent2);{% endif %}">
+                        {% if user.dni %}{{ user.dni }}{% else %}⚠️ Pendiente{% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row-label">Mejor vuelta</span>
+                    <span class="info-row-val" style="color:{{ level_info.color }};">{{ user.best_lap_time }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row-label">Miembro desde</span>
+                    <span class="info-row-val">{{ user.created_at[:10] }}</span>
+                </div>
+            </div>
+
+            <div class="info-sidebar-card">
+                <div class="info-sidebar-title">Nivel de piloto</div>
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+                    <div style="width:44px;height:44px;border-radius:50%;background:{{ level_info.color }}20;border:1.5px solid {{ level_info.color }}50;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">
+                                            </div>
+                    <div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:{{ level_info.color }};">{{ user.karting_level }}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">Nivel actual</div>
+                    </div>
+                </div>
+                <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.6;background:var(--bg3);border-radius:var(--radius);padding:0.75rem;border:1px solid var(--border);">
+                    ⚙️ Tu nivel se actualiza automáticamente según tus tiempos de vuelta, consistencia y número de carreras completadas.
+                </div>
+            </div>
+
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-full">
+                🏁 Reservar nueva tanda
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

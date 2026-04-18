@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}Reserva Manual — KARTNATION Admin{% endblock %}
+
+{% block head %}
+<style>
+    .page-header {
+        padding: 2.5rem 0 2rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+    }
+    .back-link {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+    }
+    .back-link:hover { color: var(--text); }
+    .page-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 3rem;
+        letter-spacing: 0.02em;
+        line-height: 1;
+    }
+    .page-title span { color: var(--accent2); }
+    .form-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        max-width: 700px;
+    }
+    .form-card-top { height: 4px; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+    .form-card-body { padding: 2rem; }
+    .form-section-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--accent2);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .capacity-bar {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 0.4rem;
+    }
+    .capacity-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: var(--accent);
+        transition: width 0.3s;
+    }
+    #slotInfo {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <a href="{{ url_for('admin_panel') }}" class="back-link">← Volver al panel admin</a>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:0.5rem;">Reserva manual</div>
+        <h1 class="page-title">AÑADIR <span>RESERVA</span></h1>
+        <p style="color:var(--text-muted);margin-top:0.5rem;">Para reservas realizadas por teléfono o de forma presencial.</p>
+    </div>
+
+    <div class="form-card">
+        <div class="form-card-top"></div>
+        <div class="form-card-body">
+            <form method="POST" action="{{ url_for('admin_manual_booking') }}" id="manualForm">
+
+                <!-- SECCION 1: CIRCUITO Y HORARIO -->
+                <div class="form-section-title">1. Circuito y horario</div>
+
+                <div class="form-group">
+                    <label for="circuit_id">Circuito</label>
+                    <select id="circuit_id" name="circuit_id" required onchange="loadKartTypes(this.value)">
+                        {% for c in circuits %}
+                        <option value="{{ c.id }}" {% if form.get('circuit_id') == c.id|string %}selected{% endif %}>
+                            {{ c.emoji }} {{ c.name }} — {{ c.location }} (max. {{ c.max_per_session }} pilotos)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="booking_date">Fecha</label>
+                        <input type="date" id="booking_date" name="booking_date"
+                               value="{{ form.get('booking_date', '') }}"
+                               min="{{ today }}" required onchange="loadSlots(); checkSlotCapacity();">
+                    </div>
+                    <div class="form-group">
+                        <label for="time_slot">Hora de la tanda</label>
+                        <select id="time_slot" name="time_slot" required onchange="checkSlotCapacity()">
+                            <option value="">— Selecciona primero un circuito y fecha —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="slotInfo"></div>
+
+                <div class="form-group">
+                    <label for="kart_type_id">Tipo de kart</label>
+                    <select id="kart_type_id" name="kart_type_id" required>
+                        {% for kt in kart_types %}
+                        <option value="{{ kt.id }}" {% if form.get('kart_type_id') == kt.id|string %}selected{% endif %}>
+                            {{ kt.name }} {% if kt.engine_cc %}({{ kt.engine_cc }}cc){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div id="kartLockMsg" style="display:none;margin-top:0.4rem;font-size:0.78rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;">
+                        Esta tanda ya tiene un tipo de kart asignado. No se puede cambiar.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="num_pilots">Número de pilotos que reservan</label>
+                    <input type="number" id="num_pilots" name="num_pilots"
+                           value="{{ form.get('num_pilots', 1) }}"
+                           min="1" max="999" required onchange="checkSlotCapacity()">
+
+                </div>
+
+                <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
+
+                <!-- SECCION 2: DATOS DE CONTACTO -->
+                <div class="form-section-title">2. Datos de contacto</div>
+
+                <div class="form-group">
+                    <label for="contact_name">Nombre del contacto <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="contact_name" name="contact_name"
+                           value="{{ form.get('contact_name', '') }}"
+                           placeholder="Nombre completo del piloto o responsable del grupo" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contact_phone">Teléfono</label>
+                        <input type="tel" id="contact_phone" name="contact_phone"
+                               value="{{ form.get('contact_phone', '') }}"
+                               placeholder="+34 600 000 000">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_email">Email</label>
+                        <input type="email" id="contact_email" name="contact_email"
+                               value="{{ form.get('contact_email', '') }}"
+                               placeholder="piloto@email.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notas adicionales</label>
+                    <textarea id="notes" name="notes" rows="3"
+                              placeholder="Observaciones, solicitudes especiales, forma de pago..."
+                              style="resize:vertical;">{{ form.get('notes', '') }}</textarea>
+                </div>
+
+                <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">
+                        Confirmar reserva manual
+                    </button>
+                    <a href="{{ url_for('admin_panel') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('booking_date').min = today;
+if (!document.getElementById('booking_date').value) {
+    document.getElementById('booking_date').value = today;
+}
+
+function loadKartTypes(circuitId) {
+    fetch(`/api/kart_types/${circuitId}`)
+        .then(r => r.json())
+        .then(karts => {
+            const sel = document.getElementById('kart_type_id');
+            sel.innerHTML = karts.map(k =>
+                `<option value="${k.id}">${k.name}${k.engine_cc ? ' ('+k.engine_cc+'cc)' : ''}</option>`
+            ).join('');
+        });
+    loadSlots();
+}
+
+function loadSlots() {
+    const circuitId = document.getElementById('circuit_id').value;
+    const date = document.getElementById('booking_date').value;
+    const slotSel = document.getElementById('time_slot');
+    const prevVal = slotSel.value;
+
+    if (!circuitId || !date) return;
+
+    fetch(`/api/circuit_slots?circuit_id=${circuitId}&date=${date}`)
+        .then(r => r.json())
+        .then(slots => {
+            if (slots.length === 0) {
+                slotSel.innerHTML = '<option value="">— Circuito cerrado este día —</option>';
+                return;
+            }
+            slotSel.innerHTML = slots.map(s => {
+                const label = s.full
+                    ? `${s.slot} — COMPLETA`
+                    : `${s.slot} (${s.available} plazas libres)`;
+                const color = s.full ? '#FF2D55' : s.available <= 3 ? '#FFD700' : '';
+                return `<option value="${s.slot}" ${s.slot === prevVal ? 'selected' : ''} style="color:${color};">${label}</option>`;
+            }).join('');
+            checkSlotCapacity();
+        });
+}
+
+function checkSlotCapacity() {
+    const circuitId = document.getElementById('circuit_id').value;
+    const date = document.getElementById('booking_date').value;
+    const slot = document.getElementById('time_slot').value;
+    const numPilotsInput = document.getElementById('num_pilots');
+    const infoDiv = document.getElementById('slotInfo');
+    const kartSel = document.getElementById('kart_type_id');
+    const kartLockMsg = document.getElementById('kartLockMsg');
+
+    if (!date || !slot) return;
+
+    fetch(`/api/circuit_slots?circuit_id=${circuitId}&date=${date}`)
+        .then(r => r.json())
+        .then(allSlots => {
+            const slotData = allSlots.find(s => s.slot === slot);
+            const opt = document.getElementById('circuit_id').selectedOptions[0].text;
+            const maxMatch = opt.match(/max\. (\d+)/);
+            const max = maxMatch ? parseInt(maxMatch[1]) : 12;
+            const current = slotData ? (max - slotData.available) : 0;
+            const available = slotData ? slotData.available : max;
+            const pct = Math.round(current / max * 100);
+
+            // Update num_pilots max dynamically
+            numPilotsInput.max = available;
+            if (parseInt(numPilotsInput.value) > available) {
+                numPilotsInput.value = available > 0 ? available : 1;
+            }
+
+
+            let statusColor = 'var(--green)';
+            if (pct >= 80) statusColor = 'var(--red)';
+            else if (pct >= 50) statusColor = 'var(--accent2)';
+
+            infoDiv.style.display = 'none';
+
+            // Also fetch pilots for kart lock check
+            fetch(`/api/slot_users?circuit_id=${circuitId}&date=${date}&slot=${slot}`)
+                .then(r => r.json())
+                .then(pilots => {
+                    if (pilots.length > 0 && pilots[0].kart_name) {
+                        const lockedName = pilots[0].kart_name;
+                        for (let i = 0; i < kartSel.options.length; i++) {
+                            if (kartSel.options[i].text.includes(lockedName.split(' ')[0])) {
+                                kartSel.selectedIndex = i;
+                                break;
+                            }
+                        }
+                        kartSel.disabled = true;
+                        kartLockMsg.style.display = 'block';
+                    } else {
+                        kartSel.disabled = false;
+                        kartLockMsg.style.display = 'none';
+                    }
+                });
+        });
+}
+
+// Init on load
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('booking_date').value = today;
+    loadSlots();
+});
+</script>
+{% endblock %}

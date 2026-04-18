@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}KARTNATION — Acceso Administrador{% endblock %}
+
+{% block head %}
+<style>
+    .auth-wrapper {
+        min-height: calc(100vh - 120px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 3rem 1rem;
+    }
+    .auth-card {
+        width: 100%; max-width: 420px;
+        background: var(--bg2); border: 1px solid rgba(255,215,0,0.2);
+        border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .auth-top-bar { height: 4px; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+    .auth-body { padding: 2.5rem; }
+    .auth-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--accent2); margin-bottom: 0.5rem;
+    }
+    .auth-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+    .auth-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .auth-footer {
+        padding: 1.25rem 2.5rem; border-top: 1px solid var(--border);
+        text-align: center; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .auth-footer a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .admin-register-link {
+        display: block; margin-top: 1rem;
+        text-align: center; font-size: 0.82rem;
+        color: var(--text-dim); text-decoration: none;
+    }
+    .admin-register-link:hover { color: var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-top-bar"></div>
+        <div class="auth-body">
+            <div style="font-size:3rem;text-align:center;margin-bottom:1.5rem;">⚙️</div>
+            <div class="auth-eyebrow">Acceso restringido</div>
+            <h1 class="auth-title">Panel Admin</h1>
+            <p class="auth-subtitle">Acceso exclusivo para administradores de KARTNATION.</p>
+
+            <form method="POST" action="/admin-login">
+                <div class="form-group">
+                    <label for="username">Usuario administrador</label>
+                    <input type="text" id="username" name="username" placeholder="Username admin" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" required>
+                </div>
+                <button type="submit" class="btn btn-full" style="background:var(--accent2);color:#000;font-weight:700;">
+                    Acceder al panel
+                </button>
+            </form>
+
+            <a href="/admin-register" class="admin-register-link">Registrar nuevo administrador</a>
+        </div>
+        <div class="auth-footer">
+            <a href="/">Volver a la página principal</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

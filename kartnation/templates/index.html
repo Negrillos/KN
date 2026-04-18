@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block title %}KARTNATION — Reserva tu Tanda de Karting{% endblock %}
+
+{% block head %}
+<style>
+    .hero {
+        min-height: calc(100vh - 60px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: -200px; left: -200px;
+        width: 700px; height: 700px;
+        background: radial-gradient(circle, rgba(255,77,0,0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -100px; right: -100px;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,77,0,0.04) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 600; font-size: 0.85rem;
+        letter-spacing: 0.25em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.6rem;
+    }
+
+    .hero-eyebrow::before {
+        content: '';
+        display: inline-block;
+        width: 32px; height: 2px;
+        background: var(--accent);
+    }
+
+    .hero-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(4rem, 10vw, 9rem);
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+        margin-bottom: 2rem;
+    }
+
+    .hero-title em {
+        font-style: normal;
+        color: var(--accent);
+        display: block;
+    }
+
+    .hero-sub {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 560px;
+        margin-bottom: 3rem;
+        line-height: 1.7;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+    }
+
+    .hero-stats {
+        display: flex;
+        gap: 3rem;
+        flex-wrap: wrap;
+        padding-top: 3rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .stat-num {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.8rem;
+        line-height: 1;
+        color: var(--accent);
+    }
+
+    .stat-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+        margin-top: 0.2rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    /* Features section */
+    .features {
+        padding: 5rem 0;
+    }
+
+    .racing-line-divider {
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+        position: relative;
+        margin: 0 0 0 0;
+    }
+
+    .racing-line-divider::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--accent);
+        font-size: 0.7rem;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-top: 3rem;
+    }
+
+    .feature-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        transition: border-color 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feature-card:hover { border-color: var(--accent); }
+
+    .feature-icon {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.5rem;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+        margin-bottom: 1rem;
+        line-height: 1;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .feature-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.3rem;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.75rem;
+        line-height: 1.15;
+        height: 3rem;
+        display: flex;
+        align-items: flex-start;
+        overflow: hidden;
+    }
+
+    .feature-divider {
+        width: 40px;
+        height: 2px;
+        background: var(--accent);
+        opacity: 0.6;
+        margin-bottom: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .feature-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        flex: 1;
+    }
+
+    .section-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        letter-spacing: 0.02em;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-eyebrow">La plataforma de karting de España</div>
+        <h1 class="hero-title">
+            ELIGE TU
+            <em>CIRCUITO.</em>
+            RESERVA TU
+            <em>TANDA.</em>
+        </h1>
+        <p class="hero-sub">
+            Accede a los mejores kartódromos de España.
+            Reserva en segundos, compite con pilotos de tu nivel
+            y sigue tu evolución.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('circuitos') }}" class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2rem;">
+                Ver circuitos disponibles →
+            </a>
+            {% if not session.get('user_id') %}
+            <a href="{{ url_for('register') }}" class="btn btn-secondary" style="font-size:1rem;padding:0.85rem 2rem;">
+                Crear cuenta gratis
+            </a>
+            {% endif %}
+        </div>
+        <div class="hero-stats">
+            <div>
+                <div class="stat-num">9</div>
+                <div class="stat-label">Circuitos disponibles</div>
+            </div>
+            <div>
+                <div class="stat-num">15<span style="font-size:1.5rem;">min</span></div>
+                <div class="stat-label">Intervalo de tandas</div>
+            </div>
+            <div>
+                <div class="stat-num">400<span style="font-size:1.5rem;">cc</span></div>
+                <div class="stat-label">Karts hasta</div>
+            </div>
+            <div>
+                <div class="stat-num">100<span style="font-size:1.5rem;">km/h</span></div>
+                <div class="stat-label">Velocidad máxima</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="racing-line-divider"></div>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="section-eyebrow">Por qué KARTNATION</div>
+        <h2 class="section-title">Todo lo que necesitas para pilotar</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">01</div>
+                <div class="feature-title">Encuentra tu circuito</div>
+                <div class="feature-divider"></div>
+                <p class="feature-desc">Indoor o outdoor, cerca o lejos. Encuentra el circuito perfecto para tu próxima tanda en segundos.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">02</div>
+                <div class="feature-title">Reserva cuando lo necesites</div>
+                <div class="feature-divider"></div>
+                <p class="feature-desc">Sin llamadas, sin esperas. Elige tu hora, confirma tu plaza y aparece listo para pilotar.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">03</div>
+                <div class="feature-title">Evoluciona como piloto</div>
+                <div class="feature-divider"></div>
+                <p class="feature-desc">Cada tanda suma. Crea tu perfil, evoluciona como piloto y deja tu huella en cada circuito.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">04</div>
+                <div class="feature-title">Corre en comunidad</div>
+                <div class="feature-divider"></div>
+                <p class="feature-desc">Encuentra rivales, haz amigos y vive el karting en comunidad. Cada tanda es una nueva historia.</p>
+            </div>
+        </div>
+    </section>
+
+    {% if not session.get('user_id') %}
+    <!-- CTA -->
+    <div style="background:linear-gradient(135deg,rgba(255,77,0,0.1) 0%,rgba(255,77,0,0.04) 100%);border:1px solid rgba(255,77,0,0.25);border-radius:var(--radius-lg);padding:3.5rem;text-align:center;margin-bottom:4rem;position:relative;overflow:hidden;">
+        <div style="position:absolute;font-family:'Bebas Neue',sans-serif;font-size:12rem;opacity:0.04;right:-1rem;top:50%;transform:translateY(-50%);line-height:1;pointer-events:none;letter-spacing:-0.05em;">KARTNATION</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem;">Empieza hoy</div>
+        <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,4vw,3.5rem);letter-spacing:0.02em;margin-bottom:0.75rem;">¿Listo para ponerte el casco?</h2>
+        <p style="color:var(--text-muted);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;">Crea tu perfil de piloto, reserva tu primera tanda y empieza a competir hoy. Es gratis.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            <a href="{{ url_for('register') }}" class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2.5rem;">Crear cuenta gratis</a>
+            <a href="{{ url_for('circuitos') }}" class="btn btn-secondary" style="font-size:1rem;padding:0.85rem 2.5rem;">Ver circuitos</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

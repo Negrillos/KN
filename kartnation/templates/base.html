@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KARTNATION — Reserva tu Tanda{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0A0A0B;
+            --bg2: #111114;
+            --bg3: #18181D;
+            --border: rgba(255,255,255,0.07);
+            --border-bright: rgba(255,255,255,0.15);
+            --accent: #FF4D00;
+            --accent2: #FFD700;
+            --accent3: #00C4FF;
+            --text: #F0EEE8;
+            --text-muted: #7A7A85;
+            --text-dim: #4A4A55;
+            --green: #7CFF00;
+            --red: #FF2D55;
+            --card-bg: rgba(255,255,255,0.03);
+            --card-hover: rgba(255,255,255,0.06);
+            --radius: 4px;
+            --radius-lg: 8px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        /* ── NOISE OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10,10,11,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+        }
+
+        .nav-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            height: 60px;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.05em;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-left: auto;
+        }
+
+        .nav-links a {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.4rem 0.9rem;
+            border-radius: var(--radius);
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text); background: var(--card-hover); }
+
+        .btn-nav {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--accent);
+            color: #fff !important;
+            padding: 0.45rem 1.2rem !important;
+            border-radius: var(--radius) !important;
+            transition: background 0.2s, transform 0.1s !important;
+        }
+
+        .btn-nav:hover { background: #e64400 !important; transform: translateY(-1px); }
+
+        .avatar-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 0.3rem 0.9rem 0.3rem 0.3rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .avatar-chip:hover { border-color: var(--border-bright); }
+
+        .avatar-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        /* ── FLASH MESSAGES ── */
+        .flashes {
+            position: fixed;
+            top: 70px;
+            right: 1.5rem;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 360px;
+        }
+
+        .flash {
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-left: 3px solid;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .flash.success { background: rgba(124,255,0,0.1); border-color: var(--green); color: var(--green); }
+        .flash.error { background: rgba(255,45,85,0.1); border-color: var(--red); color: var(--red); }
+        .flash.warning { background: rgba(255,215,0,0.1); border-color: var(--accent2); color: var(--accent2); }
+        .flash.info { background: rgba(0,196,255,0.1); border-color: var(--accent3); color: var(--accent3); }
+
+        /* ── CONTAINER ── */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.65rem 1.5rem;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #e64400; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,77,0,0.4); }
+        .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border-bright); }
+        .btn-secondary:hover { background: var(--card-hover); border-color: var(--text-muted); }
+        .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(255,45,85,0.3); }
+        .btn-danger:hover { background: rgba(255,45,85,0.1); }
+        .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.78rem; }
+        .btn-full { width: 100%; justify-content: center; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        }
+
+        /* ── FORM ELEMENTS ── */
+        .form-group { margin-bottom: 1.25rem; }
+
+        label {
+            display: block;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.7rem 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255,77,0,0.15);
+        }
+
+        select option { background: var(--bg3); }
+
+        /* ── BADGES ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2px;
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            margin-top: 6rem;
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.82rem;
+        }
+
+        footer strong { color: var(--accent); }
+
+        /* ── UTILITIES ── */
+        .text-muted { color: var(--text-muted); }
+        .text-accent { color: var(--accent); }
+        .text-center { text-align: center; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-4 { margin-bottom: 1rem; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 1rem; }
+            .container { padding: 0 1rem; }
+            .nav-links a:not(.btn-nav):not(.avatar-chip) { display: none; }
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <a href="{{ url_for('index') }}" class="logo">KART<span>NATION</span> 🏁</a>
+        <div class="nav-links">
+            <a href="{{ url_for('circuitos') }}">Circuitos</a>
+            {% if session.get('user_id') %}
+                {% if session.get('is_admin') %}
+                <a href="{{ url_for('admin_panel') }}" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,215,0,0.1);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.4rem 0.9rem;border-radius:var(--radius);text-decoration:none;">⚙️ Admin</a>
+                {% endif %}
+                <a href="{{ url_for('profile') }}" class="avatar-chip">
+                    <div class="avatar-dot">{{ session.get('username', 'U')[0].upper() }}</div>
+                    {{ session.get('username') }}
+                </a>
+                <a href="{{ url_for('logout') }}" style="color:var(--text-muted);font-size:0.82rem;padding:0.4rem 0.7rem;">Salir</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Entrar</a>
+                <a href="{{ url_for('register') }}" class="btn-nav">Únete</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes">
+        {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+    </div>
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.flash').forEach(f => {
+                f.style.opacity = '0';
+                f.style.transition = 'opacity 0.5s';
+                setTimeout(() => f.remove(), 500);
+            });
+        }, 4000);
+    </script>
+    {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<footer>
+    <strong>KARTNATION</strong> — La plataforma de karting más rápida de España &nbsp;|&nbsp; 🏁 Todos los circuitos, un solo lugar
+    <div style="margin-top:0.75rem;">
+        <a href="{{ url_for('admin_login') }}" style="font-size:0.7rem;color:var(--text-dim);text-decoration:none;opacity:0.4;transition:opacity 0.2s;"
+           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">
+            Acceso administradores
+        </a>
+    </div>
+</footer>
+
+</body>
+</html>

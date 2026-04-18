@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% block title %}Panel Admin — KARTNATION{% endblock %}
+{% block head %}
+<style>
+    .admin-hero {
+        padding: 2.5rem 0 2rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .admin-hero::before {
+        content: '';
+        position: absolute;
+        top: -100px; right: -100px;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .admin-badge {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+        border-radius: 4px; padding: 0.3rem 0.8rem;
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
+        font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+        color: var(--accent2); margin-bottom: 0.75rem;
+    }
+    .admin-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        letter-spacing: 0.02em; line-height: 1;
+    }
+    .admin-title span { color: var(--accent2); }
+
+    /* STATS */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem; margin-bottom: 2.5rem;
+    }
+    .stat-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); padding: 1.25rem;
+        position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .stat-card.orange::before { background: var(--accent); }
+    .stat-card.gold::before { background: var(--accent2); }
+    .stat-card.blue::before { background: var(--accent3); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; line-height: 1; }
+    .stat-card.orange .stat-val { color: var(--accent); }
+    .stat-card.gold .stat-val { color: var(--accent2); }
+    .stat-card.blue .stat-val { color: var(--accent3); }
+    .stat-card.green .stat-val { color: var(--green); }
+    .stat-lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem; }
+
+    /* SECTION */
+    .section-title {
+        font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.03em;
+        margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* TABLE */
+    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 2.5rem; }
+    .data-table th {
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
+        font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--text-dim); padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .data-table td {
+        padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
+        font-size: 0.875rem; vertical-align: middle;
+    }
+    .data-table tr:hover td { background: var(--card-hover); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .user-cell { display: flex; align-items: center; gap: 0.75rem; }
+    .mini-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
+        background: rgba(255,77,0,0.15); color: var(--accent);
+        border: 1px solid rgba(255,77,0,0.3); flex-shrink: 0;
+    }
+    .admin-mini-avatar { background: rgba(255,215,0,0.15); color: var(--accent2); border-color: rgba(255,215,0,0.3); }
+    .user-name { font-weight: 600; font-size: 0.9rem; }
+    .user-email { font-size: 0.75rem; color: var(--text-muted); }
+
+    .level-select {
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text); font-size: 0.8rem; padding: 0.3rem 0.6rem;
+        border-radius: var(--radius); cursor: pointer;
+    }
+
+    .table-wrapper { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+    .booking-row-circuit {
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .circuit-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- HERO -->
+    <section class="admin-hero">
+        <div class="admin-badge">⚙️ Panel de administración</div>
+        <h1 class="admin-title">PANEL <span>ADMIN</span></h1>
+        <p style="color:var(--text-muted);margin-top:0.5rem;">Gestiona usuarios, reservas y niveles de la plataforma KARTNATION.</p>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-row">
+        <div class="stat-card orange">
+            <div class="stat-val">{{ total_users }}</div>
+            <div class="stat-lbl">Pilotos registrados</div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-val">{{ total_bookings }}</div>
+            <div class="stat-lbl">Reservas totales</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-val">{{ upcoming_bookings }}</div>
+            <div class="stat-lbl">Reservas próximas</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-val">{{ users|length }}</div>
+            <div class="stat-lbl">Cuentas activas</div>
+        </div>
+    </div>
+
+    <!-- USERS TABLE -->
+    <h2 class="section-title">Usuarios registrados</h2>
+    <div class="table-wrapper" style="margin-bottom:2.5rem;overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Piloto</th>
+                    <th>Email</th>
+                    <th>DNI</th>
+                    <th>Teléfono</th>
+                    <th>Nivel</th>
+                    <th>Tandas</th>
+                    <th>Registrado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="mini-avatar {% if u.is_admin %}admin-mini-avatar{% endif %}">
+                                {{ u.avatar_initial or u.username[0].upper() }}
+                            </div>
+                            <div>
+                                <div class="user-name">
+                                    {{ u.full_name }}
+                                    {% if u.is_admin %}
+                                    <span style="font-size:0.65rem;background:rgba(255,215,0,0.15);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.1rem 0.4rem;border-radius:2px;vertical-align:middle;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.1em;">ADMIN</span>
+                                    {% endif %}
+                                </div>
+                                <div class="user-email">@{{ u.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ u.email }}</td>
+                    <td style="font-size:0.82rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;">
+                        {% if u.dni and u.dni != '00000000A' %}
+                            <span style="color:var(--text);">{{ u.dni }}</span>
+                        {% else %}
+                            <span style="color:var(--accent2);">⚠️ Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ u.teléfono or '—' }}</td>
+                    <td>
+                        {% if not u.is_admin %}
+                        {% set li = level_fn(u.karting_level) %}
+                        <form method="POST" action="{{ url_for('admin_update_level', user_id=u.id) }}" style="display:inline;">
+                            <select name="level" class="level-select" onchange="this.form.submit()" style="color:{{ li.color }};">
+                                {% for lvl in ['Novato','Intermedio','Avanzado','Experto'] %}
+                                <option value="{{ lvl }}" {% if lvl == u.karting_level %}selected{% endif %}>{{ lvl }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% else %}
+                        <span style="color:var(--text-dim);font-size:0.8rem;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);">{{ u.total_bookings }}</td>
+                    <td style="color:var(--text-muted);font-size:0.8rem;">{{ u.created_at[:10] }}</td>
+                    <td>
+                        {% if not u.is_admin %}
+                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}"
+                              onsubmit="return confirm('¿Eliminar a {{ u.full_name }}? Esta acción no se puede deshacer.')">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                        {% else %}
+                        <span style="color:var(--text-dim);font-size:0.78rem;">Protegido</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MANUAL BOOKING CTA -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <h2 class="section-title" style="margin-bottom:0;flex:1;">Reservas manuales (teléfono/presencial)</h2>
+        <a href="{{ url_for('admin_manual_booking') }}" class="btn btn-primary" style="margin-left:1.5rem;white-space:nowrap;">
+            + Añadir reserva manual
+        </a>
+    </div>
+    <div class="table-wrapper" style="overflow-x:auto;margin-bottom:2.5rem;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Contacto</th>
+                    <th>Circuito</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Pilotos</th>
+                    <th>Kart</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Notas</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mb in manual_bookings %}
+                <tr>
+                    <td style="font-weight:600;">{{ mb.contact_name }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:{{ mb.color }};flex-shrink:0;"></div>
+                            {{ mb.circuit_name }}
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ mb.booking_date }}</td>
+                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.05em;">{{ mb.time_slot }}</td>
+                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--accent);">{{ mb.num_pilots }}</td>
+                    <td>
+                        {% if mb.kart_name %}
+                        <span style="font-size:0.78rem;background:rgba(255,77,0,0.12);color:var(--accent);border:1px solid rgba(255,77,0,0.3);padding:0.2rem 0.5rem;border-radius:2px;">
+                            🏎 {{ mb.kart_name }}
+                        </span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ mb.contact_phone or '—' }}</td>
+                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ mb.contact_email or '—' }}</td>
+                    <td style="color:var(--text-muted);font-size:0.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ mb.notes }}">{{ mb.notes or '—' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_delete_manual', booking_id=mb.id) }}"
+                              onsubmit="return confirm('Eliminar esta reserva manual?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not manual_bookings %}
+                <tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas manuales</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="section-title">Últimas reservas online</h2>
+    <div class="table-wrapper" style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Piloto</th>
+                    <th>Circuito</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in recent_bookings %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ b.full_name }}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">@{{ b.username }}</div>
+                    </td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:{{ b.color }};"></div>
+                            {{ b.circuit_name }}
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ b.booking_date }}</td>
+                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.05em;">{{ b.time_slot }}</td>
+                    <td>
+                        {% if b.booking_date >= today %}
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);background:rgba(124,255,0,0.1);padding:0.2rem 0.5rem;border-radius:2px;">Próxima</span>
+                        {% else %}
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);background:rgba(255,255,255,0.03);padding:0.2rem 0.5rem;border-radius:2px;">Completada</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if b.booking_date >= today %}
+                        <form method="POST" action="{{ url_for('admin_remove_from_slot', booking_id=b.id) }}"
+                              onsubmit="return confirm('Eliminar a {{ b.full_name }} de esta tanda?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                        {% else %}
+                        <span style="color:var(--text-dim);font-size:0.78rem;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not recent_bookings %}
+                <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas aún</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

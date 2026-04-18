@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}KARTNATION — Crear Cuenta{% endblock %}
+
+{% block head %}
+<style>
+    .auth-wrapper {
+        min-height: calc(100vh - 120px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 3rem 1rem;
+    }
+    .auth-card {
+        width: 100%; max-width: 500px;
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .auth-top-bar { height: 4px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); }
+    .auth-body { padding: 2.5rem; }
+    .auth-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
+        font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .auth-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+    .auth-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .required-star { color: var(--accent); margin-left: 2px; }
+    .auth-footer {
+        padding: 1.25rem 2.5rem; border-top: 1px solid var(--border);
+        text-align: center; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .auth-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .section-divider {
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
+        font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--text-dim); border-top: 1px solid var(--border);
+        padding-top: 1rem; margin: 1.25rem 0 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-top-bar"></div>
+        <div class="auth-body">
+            <div style="font-size:2.5rem;text-align:center;margin-bottom:1.25rem;">🏎️</div>
+            <div class="auth-eyebrow">Nuevo piloto</div>
+            <h1 class="auth-title">Crear cuenta</h1>
+            <p class="auth-subtitle">Únete a la comunidad de karting. Los campos con <span class="required-star">*</span> son obligatorios.</p>
+
+            <form method="POST" action="/register">
+                <input type="hidden" name="is_admin" value="0">
+
+                <!-- Datos personales -->
+                <div class="section-divider">Datos personales</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="full_name">Nombre <span class="required-star">*</span></label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Fernando" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellidos <span class="required-star">*</span></label>
+                        <input type="text" id="apellido" name="apellido" placeholder="Alonso Díaz" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha_nacimiento">Fecha de nacimiento <span class="required-star">*</span></label>
+                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required max="{{ today }}" style="color-scheme:dark;" placeholder="dd/mm/aaaa">
+                </div>
+
+                <div class="form-group">
+                    <label for="teléfono">Teléfono <span class="required-star">*</span></label>
+                    <input type="tel" id="teléfono" name="teléfono" placeholder="+34 600 000 000" required>
+                </div>
+
+                <!-- Cuenta -->
+                <div class="section-divider">Datos de acceso</div>
+
+                <div class="form-group">
+                    <label for="username">Apodo del piloto <span class="required-star">*</span></label>
+                    <input type="text" id="username" name="username" placeholder="elNano_33" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico <span class="required-star">*</span></label>
+                    <input type="email" id="email" name="email" placeholder="nano33@gmail.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña <span class="required-star">*</span></label>
+                    <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.75rem;">
+                    Crear mi cuenta
+                </button>
+            </form>
+        </div>
+        <div class="auth-footer">
+            ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

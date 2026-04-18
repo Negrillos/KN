@@ -1,0 +1,1050 @@
+{% extends 'base.html' %}
+{% block title %}{{ circuit.name }} — KARTNATION{% endblock %}
+
+{% block head %}
+<style>
+    .circuit-hero {
+        padding: 3rem 0 2rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .circuit-hero::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255,77,0,0.08) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .circuit-breadcrumb {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .circuit-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .circuit-breadcrumb a:hover { color: var(--text); }
+
+    .circuit-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .diff-badge {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.3rem 0.8rem;
+        border-radius: 2px;
+        border: 1px solid;
+    }
+
+    .circuit-big-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        letter-spacing: 0.02em;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .circuit-big-title::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 3rem;
+        background: var(--accent);
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .circuit-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .info-tile {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .info-tile-val {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+    }
+
+    .info-tile-label {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 0.25rem;
+    }
+
+    /* ── BOOKING GRID ── */
+    .booking-layout {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .booking-layout { grid-template-columns: 1fr; }
+        .booking-sidebar { order: -1; }
+    }
+
+    .booking-section-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .booking-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+
+    /* Date picker */
+    .date-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .date-label {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    input[type="date"] {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.95rem;
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        max-width: 200px;
+    }
+
+    /* Slots grid */
+    .slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.6rem;
+    }
+
+    .slot-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        text-align: center;
+    }
+
+    .slot-card:hover:not(.slot-full):not(.slot-booked) {
+        border-color: var(--accent);
+        background: rgba(255,77,0,0.06);
+    }
+
+    .slot-card.slot-booked {
+        border-color: var(--green);
+        background: rgba(124,255,0,0.06);
+    }
+    .slot-card.slot-booked .slot-time {
+        color: var(--green);
+    }
+    .slot-card.slot-booked .slot-occupancy {
+        color: #ffffff;
+    }
+    .slot-card.slot-booked .slot-bar-fill {
+        background: var(--green) !important;
+    }
+
+    .slot-card.slot-full {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    .slot-card.slot-past {
+        opacity: 0.25;
+        cursor: not-allowed;
+        filter: grayscale(1);
+    }
+
+    .slot-time {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.4rem;
+        letter-spacing: 0.05em;
+        color: var(--text);
+    }
+
+
+
+    .slot-occupancy {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        margin-top: 0.2rem;
+    }
+
+    .slot-bar {
+        height: 3px;
+        border-radius: 2px;
+        background: var(--border);
+        margin-top: 0.4rem;
+        overflow: hidden;
+    }
+
+    .slot-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s;
+    }
+
+    .slot-status-dot {
+        position: absolute;
+        top: 0.4rem;
+        right: 0.4rem;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    /* ── PILOT MODAL ── */
+    .slot-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 300;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    .slot-modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .slot-modal {
+        background: var(--bg2);
+        border: 1px solid var(--border-bright);
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+        transform: translateY(20px);
+        transition: transform 0.3s;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .slot-modal-overlay.active .slot-modal {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .modal-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        letter-spacing: 0.03em;
+    }
+
+    .modal-subtitle {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.4rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .pilot-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .pilot-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.875rem 1rem;
+    }
+
+    .pilot-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.2rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .pilot-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .pilot-username {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    .pilot-level-badge {
+        margin-left: auto;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.6rem;
+        border-radius: 2px;
+        border: 1px solid;
+        white-space: nowrap;
+    }
+
+    .modal-empty {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .modal-empty .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+    .modal-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--border);
+        background: rgba(255,255,255,0.01);
+    }
+
+    /* ── SIDEBAR ── */
+    .booking-sidebar {
+        position: sticky;
+        top: 80px;
+    }
+
+    .sidebar-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .sidebar-card-top {
+        height: 4px;
+        background: var(--accent);
+    }
+
+    .sidebar-body { padding: 1.5rem; }
+
+    .sidebar-price {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.5rem;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .sidebar-price-sub {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+    }
+
+    .sidebar-features { margin-bottom: 1.25rem; }
+
+    .sidebar-feature {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-feature::before {
+        content: '✓';
+        color: var(--green);
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    /* ── LEVEL LEGEND ── */
+    .level-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.82rem;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- CIRCUIT HERO -->
+    <section class="circuit-hero">
+        <div class="circuit-breadcrumb">
+            <a href="{{ url_for('index') }}">KARTNATION</a> › <a href="{{ url_for('circuitos') }}">Circuitos</a> › {{ circuit.name }}
+        </div>
+        <div class="circuit-meta">
+            <span class="diff-badge" style="color:var(--accent);border-color:var(--accent);">{{ circuit.track_type }}</span>
+            <span style="font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                📍 {{ circuit.location }}{% if circuit.address %} — {{ circuit.address }}{% endif %}
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ circuit.address | urlencode }}"
+                   target="_blank"
+                   style="display:inline-flex;align-items:center;gap:0.25rem;color:var(--accent3);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;background:rgba(0,196,255,0.08);border:1px solid rgba(0,196,255,0.25);padding:0.2rem 0.6rem;border-radius:3px;transition:background 0.2s;"
+                   onmouseover="this.style.background='rgba(0,196,255,0.15)'"
+                   onmouseout="this.style.background='rgba(0,196,255,0.08)'">
+                    🗺 Cómo llegar
+                </a>
+            </span>
+        </div>
+        <h1 class="circuit-big-title">{{ circuit.name }}</h1>
+        <p style="color:var(--text-muted);max-width:640px;line-height:1.7;">{{ circuit.long_description }}</p>
+        <div class="circuit-info-grid">
+            <div class="info-tile">
+                <div class="info-tile-val">{{ circuit.length_m }}m</div>
+                <div class="info-tile-label">Longitud de pista</div>
+            </div>
+            <div class="info-tile">
+                <div class="info-tile-val">{{ circuit.max_speed_kmh }}</div>
+                <div class="info-tile-label">Vel. máx. (km/h)</div>
+            </div>
+            <div class="info-tile">
+                <div class="info-tile-val">{{ circuit.max_per_session }}</div>
+                <div class="info-tile-label">Pilotos por tanda</div>
+            </div>
+            <div class="info-tile">
+                <div class="info-tile-val">15<small style="font-size:1rem">min</small></div>
+                <div class="info-tile-label">Intervalo tandas</div>
+            </div>
+            <div class="info-tile">
+                <div class="info-tile-val">08:00</div>
+                <div class="info-tile-label">Primera tanda</div>
+            </div>
+            <div class="info-tile">
+                <div class="info-tile-val">18:00</div>
+                <div class="info-tile-label">Última tanda</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOOKING LAYOUT -->
+    <div class="booking-layout">
+        <!-- SLOTS -->
+        <div>
+            <h2 class="booking-section-title">Reservar tanda</h2>
+
+            <!-- Date selector -->
+            <form method="GET" action="{{ url_for('circuit_detail', circuit_id=circuit.id) }}" style="margin-bottom:2rem;">
+                <div class="date-picker-wrapper">
+                    <span class="date-label">Fecha:</span>
+                    <input type="date" name="date" value="{{ selected_date }}"
+                           min="{{ today }}"
+                           onchange="this.form.submit()">
+                    {% if default_date != today %}
+                    <span style="font-size:0.78rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.35rem 0.75rem;">
+                        ⚠️ Hoy cerrado — mostrando próximo día disponible
+                    </span>
+                    {% endif %}
+                    <span style="font-size:0.82rem;color:var(--text-muted);">
+                        Mostrando tandas del <strong style="color:var(--text);">{{ selected_date }}</strong>
+                    </span>
+                </div>
+            </form>
+
+            <!-- Slots grid -->
+            <div class="slots-grid">
+                {% for slot in time_slots %}
+                {% set data = slot_data[slot] %}
+                {% set pct = (data.count / circuit.max_per_session * 100)|int %}
+                {% set is_past = (selected_date == today and slot <= now) or selected_date < today %}
+                <div class="slot-card {% if is_past %}slot-past{% elif data.count >= circuit.max_per_session %}slot-full{% elif data.user_booked %}slot-booked{% endif %}"
+                     {% if not is_past %}onclick="openSlotModal('{{ slot }}', {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, '{{ data.locked_kart_name or '' }}')"{% endif %}>
+                    
+                    {% if data.user_booked %}
+                    <div class="slot-status-dot" style="background:var(--green);"></div>
+                    {% elif data.count >= circuit.max_per_session %}
+                    <div class="slot-status-dot" style="background:var(--red);"></div>
+                    {% endif %}
+
+                    <div class="slot-time">{{ slot }}</div>
+                    <div class="slot-occupancy">
+                        {% if is_past %}
+                            Cerrada
+                        {% elif data.count >= circuit.max_per_session %}
+                            Completa
+                        {% elif data.user_booked %}
+                            ✓ Reservada
+                        {% else %}
+                            {{ data.available }} libre{{ 's' if data.available != 1 else '' }}
+                        {% endif %}
+                    </div>
+                    <div class="slot-bar">
+                        <div class="slot-bar-fill" style="width:{{ pct }}%;background:{% if pct >= 100 %}var(--red){% else %}var(--accent){% endif %};"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="booking-sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-card-top"></div>
+                <div class="sidebar-body">
+                    <div class="sidebar-price" id="sidebarPrice" style="color:var(--accent);">{{ "%.2f"|format(pitlane_price if pitlane_price else circuit.price_per_session) }}€</div>
+                    <div class="sidebar-price-sub" id="sidebarPriceSub">por tanda · pago en circuito</div>
+                    <div class="sidebar-features">
+                        <div class="sidebar-feature">Tandas de 15 minutos</div>
+                        <div class="sidebar-feature">Casco y equipamiento incluido</div>
+                        <div class="sidebar-feature">Cronometraje en tiempo real</div>
+                        <div class="sidebar-feature">Instructores disponibles</div>
+                        <div class="sidebar-feature">Cancelación gratuita</div>
+                    </div>
+                    {% if not session.get('user_id') %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-full">
+                        Iniciar sesión para reservar
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-secondary btn-full" style="margin-top:0.5rem;">
+                        Crear cuenta gratis
+                    </a>
+                    {% else %}
+                    <div id="cartSummary" style="display:none;margin-bottom:0.75rem;">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Tandas seleccionadas</div>
+                        <div id="cartItems" style="display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.75rem;"></div>
+                        <form id="cartForm" method="POST" action="/book_multi">
+                            <input type="hidden" name="circuit_id" value="{{ circuit.id }}">
+                            <input type="hidden" name="booking_date" value="{{ selected_date }}">
+                            <div id="cartHiddenFields"></div>
+                            <button type="submit" class="btn btn-primary btn-full" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;">
+                                ✅ Confirmar reservas
+                            </button>
+                        </form>
+                        <button onclick="clearCart()" style="width:100%;margin-top:0.4rem;padding:0.45rem;background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);font-size:0.78rem;cursor:pointer;">
+                            Cancelar selección
+                        </button>
+                    </div>
+                    <div id="sidebarHint" style="text-align:center;padding:1rem;background:var(--bg3);border-radius:var(--radius);font-size:0.85rem;color:var(--text-muted);">
+                        Haz clic en una tanda para ver detalles y reservar
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- LEADERBOARD PLACEHOLDER -->
+            <div style="margin-top:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+                <div style="height:3px;background:var(--accent);"></div>
+                <div style="padding:1.25rem;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;">Mejores tiempos</div>
+                    <div style="display:flex;gap:0.25rem;margin-bottom:1rem;background:var(--bg3);border-radius:4px;padding:3px;">
+                        <button onclick="setLbTab(this)" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.35rem 0.2rem;cursor:pointer;">All-Time</button>
+                        <button onclick="setLbTab(this)" style="flex:1;background:none;color:var(--text-muted);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.35rem 0.2rem;cursor:pointer;">Mensual</button>
+                        <button onclick="setLbTab(this)" style="flex:1;background:none;color:var(--text-muted);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.35rem 0.2rem;cursor:pointer;">Semanal</button>
+                        <button onclick="setLbTab(this)" style="flex:1;background:none;color:var(--text-muted);border:none;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.35rem 0.2rem;cursor:pointer;">Hoy</button>
+                    </div>
+                    {% for pos in [1,2,3] %}
+                    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;{% if pos < 3 %}border-bottom:1px solid var(--border);{% endif %}">
+                        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--text-dim);width:1.5rem;text-align:center;">{{ pos }}</span>
+                        <div style="flex:1;font-size:0.82rem;color:var(--text-dim);">Sin datos aún</div>
+                        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--text-dim);letter-spacing:0.05em;">--:--.---</span>
+                    </div>
+                    {% endfor %}
+                    {% if session.get('user_id') %}
+                    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Tu posición all-time</div>
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--text-dim);line-height:1;">#—</div>
+                            <div>
+                                <div style="font-size:0.82rem;color:var(--text-dim);">Sin vuelta registrada</div>
+                                <div style="font-size:0.73rem;color:var(--text-dim);margin-top:0.1rem;">Disponible próximamente</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function setLbTab(btn) {
+    btn.closest('div').querySelectorAll('button').forEach(b => {
+        b.style.background = 'none';
+        b.style.color = 'var(--text-muted)';
+    });
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#fff';
+}
+</script>
+
+<!-- ── SLOT MODAL ── -->
+<div class="slot-modal-overlay" id="slotModal">
+    <div class="slot-modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title" id="modalTitle">Tanda 08:00</div>
+                <div class="modal-subtitle" id="modalSubtitle">{{ circuit.name }} · {{ selected_date }}</div>
+            </div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+                <div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>
+                Cargando pilotos...
+            </div>
+        </div>
+        <div class="modal-footer" id="modalFooter"></div>
+    </div>
+</div>
+
+<script>
+    const circuitId = {{ circuit.id }};
+    const selectedDate = '{{ selected_date }}';
+    const circuitColor = 'var(--accent)';
+    const maxPerSession = {{ circuit.max_per_session }};
+    const isLoggedIn = {{ 'true' if session.get('user_id') else 'false' }};
+
+    // Kart types data from server
+    const kartTypes = [
+        {% for kt in kart_types %}
+        { id: {{ kt.id }}, name: "{{ kt.name }}", cc: {{ kt.engine_cc or 0 }}, description: "{{ kt.description or '' }}", minAge: {{ kt.min_age or 0 }}, pricePerSession: {{ kt.price_per_session if kt.price_per_session else 0.0 }} },
+        {% endfor %}
+    ];
+
+    const LEVEL_COLORS = {
+        'Novato': '#7CFF00', 'Intermedio': '#FFD700',
+        'Avanzado': '#FF8C00', 'Experto': '#FF4D00'
+    };
+
+    let currentSlot = null;
+    let currentLockedKartId = null;
+    let currentLockedKartGroup = null;
+    let currentKartMixPolicy = 'all';
+
+    async function openSlotModal(slot, count, max, userBooked, lockedKartId, lockedKartName, lockedKartGroup, kartMixPolicy) {
+        currentSlot = slot;
+        currentLockedKartId = lockedKartId || null;
+        currentLockedKartGroup = lockedKartGroup || null;
+        currentKartMixPolicy = kartMixPolicy || 'all';
+        document.getElementById('slotModal').classList.add('active');
+        document.getElementById('modalTitle').textContent = `Tanda ${slot}`;
+
+        let subtitle = `{{ circuit.name }} · ${selectedDate} · ${count}/${max} pilotos`;
+        if (lockedKartName && kartMixPolicy === 'separate') {
+            const groupLabel = lockedKartGroup === 'B' ? 'Biplaza/Junior' : 'Adulto';
+            subtitle += ` · <span style="color:var(--accent);font-weight:700;">🔒 Tanda ${groupLabel}</span>`;
+        } else if (lockedKartName) {
+            subtitle += ` · <span style="color:var(--accent);font-weight:700;">🏎 ${lockedKartName}</span>`;
+        }
+        document.getElementById('modalSubtitle').innerHTML = subtitle;
+
+        const body = document.getElementById('modalBody');
+
+        if (!isLoggedIn) {
+            body.innerHTML = `
+                <div style="text-align:center;padding:2rem;">
+                    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+                    <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;color:var(--text);">Inicia sesión para ver los pilotos</div>
+                    <div style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1.2rem;">Necesitas una cuenta para ver quién hay en esta tanda.</div>
+                    <a href="/login" style="display:inline-block;padding:0.55rem 1.4rem;background:var(--accent);color:#000;font-weight:700;border-radius:6px;text-decoration:none;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;font-size:1rem;">Iniciar sesión</a>
+                    <a href="/register" style="display:inline-block;margin-left:0.75rem;padding:0.55rem 1.4rem;background:transparent;color:var(--accent);font-weight:700;border-radius:6px;text-decoration:none;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;font-size:1rem;border:1.5px solid var(--accent);">Registrarse</a>
+                </div>`;
+            return;
+        }
+
+        body.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);"><div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>Cargando pilotos...</div>`;
+
+        try {
+            const res = await fetch(`/api/slot_users?circuit_id=${circuitId}&date=${selectedDate}&slot=${slot}`);
+            const pilots = await res.json();
+            renderPilots(pilots, slot, count, max, userBooked, lockedKartId, lockedKartName, lockedKartGroup, kartMixPolicy);
+        } catch(e) {
+            body.innerHTML = `<div style="text-align:center;color:var(--red);padding:2rem;">Error al cargar pilotos</div>`;
+        }
+    }
+
+
+    function getKartGroup(name) {
+        const n = (name || '').toLowerCase();
+        return (n.includes('biplaza') || n.includes('junior') || n.includes('infantil')) ? 'B' : 'A';
+    }
+
+    function buildKartSelector(lockedKartId, lockedKartName) {
+        const lockedKartColor = '#FF4D00';
+        if (kartTypes.length === 0) return '';
+
+        if (lockedKartId) {
+            const kt = kartTypes.find(k => k.id === lockedKartId) || {};
+            const desc = kt.description || '';
+            const cc = (kt.cc > 0 && !kt.name.toLowerCase().includes(kt.cc + 'cc') && !kt.name.toLowerCase().includes(kt.cc + ' cc')) ? kt.cc + 'cc' : (kt.cc === 0 && !kt.name.toLowerCase().includes('elec') ? 'Eléctrico' : '');
+            const minAge = kt.minAge > 0 ? `Min. ${kt.minAge} años` : '';
+            return `
+            <div style="margin-bottom:1rem;">
+                <div style="
+                    font-family:'Barlow Condensed',sans-serif;
+                    font-size:0.72rem;font-weight:700;
+                    letter-spacing:0.14em;text-transform:uppercase;
+                    color:var(--text-muted);margin-bottom:0.6rem;
+                ">${currentKartMixPolicy === "separate" ? (currentLockedKartGroup === "B" ? "🔒 Tanda Biplaza/Junior" : "🔒 Tanda Adulto") : "Kart asignado a esta tanda"}</div>
+                <div style="
+                    background:color-mix(in srgb,${lockedKartColor} 8%,transparent);
+                    border:2px solid color-mix(in srgb,${lockedKartColor} 50%,transparent);
+                    border-radius:8px;
+                    padding:1rem 1.1rem;
+                    display:flex;
+                    align-items:center;
+                    gap:1rem;
+                    position:relative;
+                    overflow:hidden;
+                ">
+                    <div style="
+                        position:absolute;top:0;left:0;right:0;height:3px;
+                        background:${lockedKartColor};
+                        border-radius:8px 8px 0 0;
+                    "></div>
+                    <div style="
+                        width:48px;height:48px;
+                        border-radius:8px;
+                        background:color-mix(in srgb,${lockedKartColor} 15%,transparent);
+                        border:1.5px solid color-mix(in srgb,${lockedKartColor} 45%,transparent);
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:1.6rem;flex-shrink:0;
+                    ">🏎</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="
+                            font-family:'Bebas Neue',sans-serif;
+                            font-size:1.25rem;letter-spacing:0.04em;
+                            color:${lockedKartColor};
+                            line-height:1.1;
+                        ">${lockedKartName}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem;">
+                            ${cc}${minAge ? ' · ' + minAge : ''}${desc ? '<br><span style=\"opacity:0.7\">' + desc + '</span>' : ''}
+                        </div>
+                    </div>
+                    <div style="
+                        font-family:'Barlow Condensed',sans-serif;
+                        font-size:0.7rem;font-weight:700;
+                        letter-spacing:0.1em;text-transform:uppercase;
+                        background:color-mix(in srgb,${lockedKartColor} 15%,transparent);
+                        color:${lockedKartColor};
+                        border:1px solid color-mix(in srgb,${lockedKartColor} 35%,transparent);
+                        border-radius:4px;padding:0.25rem 0.7rem;
+                        white-space:nowrap;align-self:flex-start;
+                    ">🔒 Fijo</div>
+                </div>
+                <input type="hidden" name="kart_type_id" value="${lockedKartId}">
+                <div style="margin-top:0.45rem;font-size:0.73rem;color:var(--text-dim);padding-left:0.25rem;">
+                    ${currentKartMixPolicy === 'separate' ? 'Tanda fijada por el primer piloto. Solo pueden unirse karts del mismo grupo.' : 'Todos los pilotos de esta tanda compiten con el mismo kart.'}
+                </div>
+            </div>`;
+        }
+
+        // Slot free — let user choose
+        // If policy is 'separate' and there's a locked group, filter karts by group
+        let availableKarts = kartTypes;
+        let groupWarning = '';
+        if (currentKartMixPolicy === 'separate' && currentLockedKartGroup) {
+            availableKarts = kartTypes.filter(kt => getKartGroup(kt.name) === currentLockedKartGroup);
+            const gLabel = currentLockedKartGroup === 'B' ? 'Biplaza/Junior' : 'Adulto';
+            groupWarning = `<div style="font-size:0.75rem;color:var(--accent);background:rgba(255,77,0,0.08);border:1px solid rgba(255,77,0,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
+                🔒 Tanda fijada como <strong>${gLabel}</strong>. Solo puedes reservar karts de este grupo.
+            </div>`;
+        } else if (currentKartMixPolicy === 'separate') {
+            groupWarning = `<div style="font-size:0.75rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
+                ⚠️ Eres el primero en esta tanda. El tipo de kart que elijas (adulto o biplaza/junior) fijará el grupo para los demás pilotos.
+            </div>`;
+        } else {
+            groupWarning = `<div style="font-size:0.75rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
+                ⚠️ Eres el primero en esta tanda. Todos los tipos de kart son compatibles.
+            </div>`;
+        }
+
+        let opts = availableKarts.map(kt => {
+            const priceStr = kt.pricePerSession > 0 ? ` · ${kt.pricePerSession.toFixed(2)}€` : '';
+            const ccSuffix = (kt.cc > 0 && !kt.name.toLowerCase().includes(kt.cc + 'cc') && !kt.name.toLowerCase().includes(kt.cc + ' cc')) ? ' ' + kt.cc + 'cc' : (kt.cc === 0 && !kt.name.toLowerCase().includes('elec') ? ' Elec.' : '');
+            return `<option value="${kt.id}">${kt.name}${ccSuffix}${priceStr}</option>`;
+        }).join('');
+
+        if (!opts) {
+            return `<div style="color:var(--red);font-size:0.85rem;padding:0.75rem;">No hay karts disponibles para esta tanda.</div>`;
+        }
+
+        return `
+        <div style="margin-bottom:1rem;">
+            <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.4rem;">Elige el tipo de kart</label>
+            ${groupWarning}
+            <select name="kart_type_id" id="kartSelect" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:0.7rem 1rem;" onchange="updateKartInfo(this)">
+                ${opts}
+            </select>
+            <div id="kartInfo" style="margin-top:0.5rem;font-size:0.78rem;color:var(--text-muted);padding:0.5rem 0.75rem;background:var(--bg3);border-radius:4px;border-left:3px solid var(--accent);"></div>
+        </div>`;
+    }
+
+    const BASE_PRICE = {{ pitlane_price if pitlane_price else circuit.price_per_session }};
+
+    // ── CART ─────────────────────────────────────────────────────────────────
+    // cart = [ { slot, kartTypeId, kartTypeName, pricePerSession, numPilots } ]
+    let cart = [];
+
+    function getKartPrice(kt) {
+        return kt && kt.pricePerSession > 0 ? kt.pricePerSession : BASE_PRICE;
+    }
+
+    function cartTotal() {
+        return cart.reduce((sum, item) => sum + item.pricePerSession * item.numPilots, 0);
+    }
+
+    function renderCart() {
+        const cartSummary = document.getElementById('cartSummary');
+        const cartItems   = document.getElementById('cartItems');
+        const cartHidden  = document.getElementById('cartHiddenFields');
+        const sidebarPrice = document.getElementById('sidebarPrice');
+        const sidebarSub   = document.getElementById('sidebarPriceSub');
+        const hint         = document.getElementById('sidebarHint');
+
+        if (cart.length === 0) {
+            cartSummary.style.display = 'none';
+            hint.style.display = 'block';
+            sidebarPrice.textContent = BASE_PRICE.toFixed(2) + '€';
+            sidebarSub.textContent = 'por tanda · pago en circuito';
+            return;
+        }
+
+        cartSummary.style.display = 'block';
+        hint.style.display = 'none';
+
+        // Cart item rows
+        cartItems.innerHTML = cart.map((item, i) => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:4px;padding:0.45rem 0.6rem;font-size:0.82rem;">
+                <div>
+                    <span style="font-weight:700;color:var(--accent);">${item.slot}</span>
+                    <span style="color:var(--text-muted);margin-left:0.4rem;">${item.kartTypeName}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <span style="color:var(--text);font-weight:600;">${(item.pricePerSession * item.numPilots).toFixed(2)}€</span>
+                    <button onclick="removeFromCart(${i})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;line-height:1;padding:0;">✕</button>
+                </div>
+            </div>`).join('');
+
+        // Hidden fields for form submission
+        cartHidden.innerHTML = cart.map((item, i) => `
+            <input type="hidden" name="slots[${i}][time_slot]" value="${item.slot}">
+            <input type="hidden" name="slots[${i}][kart_type_id]" value="${item.kartTypeId || ''}">
+        `).join('');
+
+        // Sidebar total
+        const total = cartTotal();
+        const tandas = cart.length;
+        sidebarPrice.textContent = total.toFixed(2) + '€';
+        sidebarSub.textContent = `total · ${tandas} tanda${tandas !== 1 ? 's' : ''} · pago en circuito`;
+    }
+
+    function addToCart(slot, kartTypeId, numPilots) {
+        const kt = kartTypes.find(k => k.id === kartTypeId);
+        const price = getKartPrice(kt);
+        const name = kt ? kt.name : 'Kart';
+        // Remove if same slot already in cart
+        cart = cart.filter(item => item.slot !== slot);
+        cart.push({ slot, kartTypeId, kartTypeName: name, pricePerSession: price, numPilots: numPilots || 1 });
+        renderCart();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function clearCart() {
+        cart = [];
+        renderCart();
+    }
+
+    // ── ORIGINAL HELPERS ─────────────────────────────────────────────────────
+
+    function updateKartInfo(sel) {
+        const id = parseInt(sel.value);
+        const kt = kartTypes.find(k => k.id === id);
+        if (!kt) return;
+        const info = document.getElementById('kartInfo');
+        const priceText = kt.pricePerSession > 0 ? ` | ${kt.pricePerSession.toFixed(2)}€/tanda` : '';
+        if (info) info.textContent = kt.description + (kt.minAge > 0 ? ` | Min. ${kt.minAge} años.` : '') + priceText;
+    }
+
+    function renderPilots(pilots, slot, count, max, userBooked, lockedKartId, lockedKartName, lockedKartGroup, kartMixPolicy) {
+        const body = document.getElementById('modalBody');
+        const footer = document.getElementById('modalFooter');
+
+        if (pilots.length === 0) {
+            body.innerHTML = `
+                <div class="modal-empty">
+                    <div class="empty-icon">🏎️</div>
+                    <div style="font-weight:600;margin-bottom:0.3rem;">Tanda sin pilotos</div>
+                    <div style="font-size:0.82rem;">Sé el primero y elige el tipo de kart para esta tanda.</div>
+                </div>`;
+        } else {
+            const items = pilots.map(p => {
+                const color = LEVEL_COLORS[p.karting_level] || '#7CFF00';
+                return `
+                <div class="pilot-item">
+                    <div class="pilot-avatar" style="background:${color}22;color:${color};border:1px solid ${color}40;">
+                        ${p.avatar_initial || p.full_name[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="pilot-name">${p.full_name}</div>
+                        <div class="pilot-username">@${p.username} · ${p.races_completed} carreras</div>
+                    </div>
+                    <span class="pilot-level-badge" style="color:${color};border-color:${color}40;background:${color}10;">
+                        ${p.karting_level}
+                    </span>
+                </div>`;
+            }).join('');
+
+            const available = max - count;
+            body.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <span style="font-size:0.82rem;color:var(--text-muted);">${count} piloto${count!==1?'s':''} registrado${count!==1?'s':''}</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">${available} plaza${available!==1?'s':''} libre${available!==1?'s':''}</span>
+                </div>
+                <div class="pilot-list">${items}</div>`;
+        }
+
+        // Footer
+        if (!isLoggedIn) {
+            footer.innerHTML = `<a href="/login" class="btn btn-primary btn-full">Iniciar sesión para reservar</a>`;
+        } else if (userBooked) {
+            footer.innerHTML = `
+                <div style="background:rgba(124,255,0,0.08);border:1px solid rgba(124,255,0,0.2);border-radius:4px;padding:0.75rem 1rem;text-align:center;color:var(--green);font-size:0.85rem;font-weight:600;">
+                    Ya tienes esta tanda reservada
+                </div>`;
+        } else if (count >= max) {
+            footer.innerHTML = `
+                <div style="background:rgba(255,45,85,0.08);border:1px solid rgba(255,45,85,0.2);border-radius:4px;padding:0.75rem 1rem;text-align:center;color:var(--red);font-size:0.85rem;font-weight:600;">
+                    Tanda completa - Elige otra hora
+                </div>`;
+        } else {
+            const kartSelector = buildKartSelector(lockedKartId, lockedKartName);
+            const alreadyInCart = cart.some(item => item.slot === slot);
+            footer.innerHTML = `
+                <div id="modalKartWrap">
+                    ${kartSelector}
+                </div>
+                <button onclick="handleSelectTanda('${slot}', ${lockedKartId || 'null'})" class="btn btn-primary btn-full" style="margin-top:0.5rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;" id="btnSelectTanda">
+                    ${alreadyInCart ? '✓ Ya añadida — volver a seleccionar' : 'Seleccionar tanda'}
+                </button>`;
+            const sel = document.getElementById('kartSelect');
+            if (sel) updateKartInfo(sel);
+        }
+    }
+
+    function handleSelectTanda(slot, lockedKartId) {
+        // Get selected kart type id
+        let kartTypeId = lockedKartId;
+        if (!kartTypeId) {
+            const sel = document.getElementById('kartSelect');
+            if (sel) kartTypeId = parseInt(sel.value);
+        }
+        addToCart(slot, kartTypeId, 1);
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('slotModal').classList.remove('active');
+    }
+
+    document.getElementById('slotModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+</script>
+{% endblock %}

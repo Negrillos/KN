@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Editar Perfil — KARTNATION{% endblock %}
+
+{% block head %}
+<style>
+    .page-header {
+        padding: 2.5rem 0 2rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+    }
+    .back-link {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.8rem; font-weight: 600;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-muted); text-decoration: none;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        margin-bottom: 1rem;
+    }
+    .back-link:hover { color: var(--text); }
+    .page-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 3rem; letter-spacing: 0.02em; line-height: 1;
+    }
+    .page-title span { color: var(--accent); }
+    .edit-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        max-width: 860px;
+    }
+    @media (max-width: 700px) { .edit-layout { grid-template-columns: 1fr; } }
+    .edit-card {
+        background: var(--bg2); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .edit-card-top { height: 3px; }
+    .edit-card-body { padding: 1.5rem; }
+    .edit-card-title {
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
+        font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--text-muted); margin-bottom: 1.25rem;
+        padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    }
+    .required-star { color: var(--accent); margin-left: 2px; }
+    .optional-tag {
+        font-size: 0.68rem; color: var(--text-dim);
+        font-family: 'Barlow Condensed', sans-serif;
+        letter-spacing: 0.06em; margin-left: 0.4rem;
+    }
+    .pending-hint {
+        font-size: 0.75rem; color: var(--accent2);
+        background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2);
+        border-radius: 4px; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <a href="{{ url_for('profile') }}" class="back-link">← Volver al perfil</a>
+        <h1 class="page-title">EDITAR <span>PERFIL</span></h1>
+        <p style="color:var(--text-muted);margin-top:0.5rem;">Actualiza tus datos personales y de acceso.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('profile_edit') }}">
+        <div class="edit-layout">
+
+            <!-- DATOS PERSONALES -->
+            <div class="edit-card">
+                <div class="edit-card-top" style="background:var(--accent);"></div>
+                <div class="edit-card-body">
+                    <div class="edit-card-title">Datos personales</div>
+
+                    <div class="form-group">
+                        <label for="full_name">Nombre <span class="required-star">*</span></label>
+                        <input type="text" id="full_name" name="full_name"
+                               value="{{ user.full_name or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="apellido">Apellidos <span class="required-star">*</span></label>
+                        <input type="text" id="apellido" name="apellido"
+                               value="{{ user.apellido or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" max="{{ now_date }}"
+                               value="{{ user.fecha_nacimiento or '' }}" max="{{ ['2025','12','31']|join('-') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teléfono">Teléfono <span class="required-star">*</span></label>
+                        <input type="tel" id="teléfono" name="teléfono"
+                               value="{{ user.teléfono or '' }}" required placeholder="+34 600 000 000">
+                    </div>
+
+                    <div class="form-group">
+                        {% if not user.dni %}
+                        <div class="pending-hint">⚠️ Tu DNI está pendiente de añadir.</div>
+                        {% endif %}
+                        <label for="dni">DNI / NIE <span class="optional-tag">opcional</span></label>
+                        <input type="text" id="dni" name="dni"
+                               value="{{ user.dni or '' }}"
+                               placeholder="12345678A" maxlength="10"
+                               style="text-transform:uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">Bio <span class="optional-tag">opcional</span></label>
+                        <textarea id="bio" name="bio" rows="3"
+                                  placeholder="Cuéntanos algo sobre ti como piloto..."
+                                  style="resize:vertical;">{{ user.bio or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATOS DE ACCESO + CONTRASEÑA -->
+            <div style="display:flex;flex-direction:column;gap:1.5rem;">
+                <div class="edit-card">
+                    <div class="edit-card-top" style="background:var(--accent3);"></div>
+                    <div class="edit-card-body">
+                        <div class="edit-card-title">Datos de acceso</div>
+                        <div class="form-group">
+                            <label>Apodo del piloto</label>
+                            <input type="text" value="{{ user.username }}" disabled
+                                   style="opacity:0.5;cursor:not-allowed;">
+                            <div style="font-size:0.73rem;color:var(--text-dim);margin-top:0.3rem;">El nombre de piloto no se puede cambiar.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo electrónico</label>
+                            <input type="text" value="{{ user.email }}" disabled
+                                   style="opacity:0.5;cursor:not-allowed;">
+                            <div style="font-size:0.73rem;color:var(--text-dim);margin-top:0.3rem;">El email no se puede cambiar por seguridad.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-card">
+                    <div class="edit-card-top" style="background:var(--accent2);"></div>
+                    <div class="edit-card-body">
+                        <div class="edit-card-title">Cambiar contraseña <span class="optional-tag">dejar en blanco para no cambiar</span></div>
+                        <div class="form-group">
+                            <label for="new_password">Nueva contraseña</label>
+                            <input type="password" id="new_password" name="new_password"
+                                   placeholder="Mínimo 6 caracteres">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirmar contraseña</label>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   placeholder="Repite la nueva contraseña">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:0.75rem;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">
+                        Guardar cambios
+                    </button>
+                    <a href="{{ url_for('profile') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
