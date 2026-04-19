@@ -6,6 +6,9 @@ from datetime import datetime, date, timedelta
 import json
 from functools import wraps
 from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'kartnation_secret_key_2024')
@@ -267,6 +270,9 @@ def init_db():
             c.execute(f'ALTER TABLE users ADD COLUMN {col} {defval}')
         except: pass
 
+    try:
+        c.execute('ALTER TABLE circuit_manual_bookings ADD COLUMN kart_type_id INTEGER')
+    except: pass
 
 
     # Seed circuits
@@ -1065,9 +1071,47 @@ def circuit_detail(circuit_id):
                            now=datetime.now().strftime('%H:%M'), today=date.today().isoformat(),
                            default_date=default_date, pitlane_price=pitlane_price)
 
+@app.route('/api/complete-profile', methods=['POST'])
+@login_required
+def api_complete_profile():
+    dni = request.form.get('dni', '').strip().upper()
+    fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
+    if not dni and not fecha_nacimiento:
+        return jsonify({'ok': False, 'error': 'No se proporcionaron datos.'})
+    updates = []
+    values = []
+    if dni:
+        updates.append('dni=?')
+        values.append(dni)
+    if fecha_nacimiento:
+        updates.append('fecha_nacimiento=?')
+        values.append(fecha_nacimiento)
+    values.append(session['user_id'])
+    conn = get_db()
+    conn.execute(f'UPDATE users SET {", ".join(updates)} WHERE id=?', values)
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+def _check_profile_complete():
+    conn = get_db()
+    user = conn.execute('SELECT dni, fecha_nacimiento FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    conn.close()
+    missing = []
+    if not user['dni']:
+        missing.append('DNI')
+    if not user['fecha_nacimiento']:
+        missing.append('fecha de nacimiento')
+    return missing
+
 @app.route('/book', methods=['POST'])
 @login_required
 def book_slot():
+    missing = _check_profile_complete()
+    if missing:
+        flash(f'Debes completar tu perfil antes de reservar. Faltan: {", ".join(missing)}.', 'error')
+        return redirect(url_for('profile_edit'))
+
     circuit_id = request.form['circuit_id']
     booking_date = request.form['booking_date']
     time_slot = request.form['time_slot']
@@ -1149,6 +1193,11 @@ def book_slot():
 @app.route('/book_multi', methods=['POST'])
 @login_required
 def book_multi():
+    missing = _check_profile_complete()
+    if missing:
+        flash(f'Debes completar tu perfil antes de reservar. Faltan: {", ".join(missing)}.', 'error')
+        return redirect(url_for('profile_edit'))
+
     circuit_id  = request.form['circuit_id']
     booking_date = request.form['booking_date']
 
@@ -1732,9 +1781,14 @@ def api_pitlane_slots():
                 cur += timedelta(minutes=15)
         except: pass
 
-    # Get linked main circuit_id
+    # Get linked main circuit_id and kart_mix_policy
     acc = conn.execute('SELECT linked_circuit_id FROM circuit_accounts WHERE id=?',(account_id,)).fetchone()
     linked_cid = acc['linked_circuit_id'] if acc else None
+    kart_mix_policy = 'all'
+    if linked_cid:
+        cr = conn.execute('SELECT kart_mix_policy FROM circuits WHERE id=?', (linked_cid,)).fetchone()
+        if cr and cr['kart_mix_policy']:
+            kart_mix_policy = cr['kart_mix_policy']
 
     result = []
     for slot in slots:
@@ -1758,7 +1812,43 @@ def api_pitlane_slots():
             admin_bk = sum(r['num_pilots'] for r in admin_rows)
         total = pitlane_bk + online_bk + admin_bk
         available = max(0, max_per - total)
-        result.append({'slot': slot, 'total': total, 'available': available, 'full': total >= max_per, 'max': max_per})
+
+        # Determine locked kart group for this slot
+        locked_kart_group = None
+        if kart_mix_policy == 'separate' and linked_cid:
+            # Check online pilot bookings
+            first_online = conn.execute(
+                '''SELECT kt.name FROM bookings b JOIN kart_types kt ON b.kart_type_id=kt.id
+                   WHERE b.circuit_id=? AND b.booking_date=? AND b.time_slot=? LIMIT 1''',
+                (linked_cid, booking_date, slot)
+            ).fetchone()
+            if first_online:
+                locked_kart_group = get_kart_group(first_online['name'])
+            else:
+                # Check admin manual bookings
+                first_admin = conn.execute(
+                    '''SELECT kt.name FROM manual_bookings mb JOIN kart_types kt ON mb.kart_type_id=kt.id
+                       WHERE mb.circuit_id=? AND mb.booking_date=? AND mb.time_slot=? LIMIT 1''',
+                    (linked_cid, booking_date, slot)
+                ).fetchone()
+                if first_admin:
+                    locked_kart_group = get_kart_group(first_admin['name'])
+                else:
+                    # Check pitlane manual bookings
+                    first_pitlane = conn.execute(
+                        '''SELECT kt.name FROM circuit_manual_bookings cmb JOIN kart_types kt ON cmb.kart_type_id=kt.id
+                           WHERE cmb.account_id=? AND cmb.booking_date=? AND cmb.time_slot=? LIMIT 1''',
+                        (account_id, booking_date, slot)
+                    ).fetchone()
+                    if first_pitlane:
+                        locked_kart_group = get_kart_group(first_pitlane['name'])
+
+        result.append({
+            'slot': slot, 'total': total, 'available': available,
+            'full': total >= max_per, 'max': max_per,
+            'locked_kart_group': locked_kart_group,
+            'kart_mix_policy': kart_mix_policy,
+        })
     conn.close()
     return jsonify(result)
 
@@ -1838,7 +1928,9 @@ def pitlane_dashboard():
 
     # Manual bookings by the circuit
     manual_bookings = conn.execute(
-        'SELECT * FROM circuit_manual_bookings WHERE account_id=? ORDER BY booking_date DESC, time_slot DESC',
+        '''SELECT cmb.*, kt.name as kart_name FROM circuit_manual_bookings cmb
+           LEFT JOIN kart_types kt ON cmb.kart_type_id=kt.id
+           WHERE cmb.account_id=? ORDER BY cmb.booking_date DESC, cmb.time_slot DESC''',
         (acc_id,)
     ).fetchall()
 
@@ -1861,7 +1953,7 @@ def pitlane_dashboard():
         online_bookings = [dict(r, num_pilots=1, notes='—', source='pilot') for r in rows]
 
     # Merge: tag manual bookings with source
-    manual_list = [dict(b, source='manual', kart_name='') for b in manual_bookings]
+    manual_list = [dict(b, source='manual') for b in manual_bookings]
 
     # Combined and sorted
     all_bookings = sorted(manual_list + online_bookings,
@@ -1974,7 +2066,7 @@ def pitlane_add_booking():
     booking_date = request.form.get('booking_date','').strip()
     time_slot = request.form.get('time_slot','').strip()
     num_pilots = int(request.form.get('num_pilots', 1) or 1)
-    kart_type_id = request.form.get('kart_type_id','').strip()
+    kart_type_id = request.form.get('kart_type_id','').strip() or None
     contact_name = request.form.get('contact_name','').strip()
     contact_phone = request.form.get('contact_phone','').strip()
     contact_email = request.form.get('contact_email','').strip()
@@ -1983,10 +2075,50 @@ def pitlane_add_booking():
         flash('Fecha, hora y nombre de contacto son obligatorios.', 'error')
         return redirect(url_for('pitlane_dashboard'))
     conn = get_db()
+
+    # Validate kart compatibility if policy is 'separate'
+    linked = conn.execute('SELECT linked_circuit_id FROM circuit_accounts WHERE id=?', (acc_id,)).fetchone()
+    linked_cid = linked['linked_circuit_id'] if linked else None
+    if linked_cid and kart_type_id:
+        circuit_row = conn.execute('SELECT kart_mix_policy FROM circuits WHERE id=?', (linked_cid,)).fetchone()
+        if circuit_row and circuit_row['kart_mix_policy'] == 'separate':
+            chosen_kt = conn.execute('SELECT name FROM kart_types WHERE id=?', (kart_type_id,)).fetchone()
+            chosen_group = get_kart_group(chosen_kt['name']) if chosen_kt else 'A'
+            # Find locked group from existing bookings in this slot
+            locked_group = None
+            first = conn.execute(
+                '''SELECT kt.name FROM bookings b JOIN kart_types kt ON b.kart_type_id=kt.id
+                   WHERE b.circuit_id=? AND b.booking_date=? AND b.time_slot=? LIMIT 1''',
+                (linked_cid, booking_date, time_slot)
+            ).fetchone()
+            if first:
+                locked_group = get_kart_group(first['name'])
+            else:
+                first = conn.execute(
+                    '''SELECT kt.name FROM manual_bookings mb JOIN kart_types kt ON mb.kart_type_id=kt.id
+                       WHERE mb.circuit_id=? AND mb.booking_date=? AND mb.time_slot=? LIMIT 1''',
+                    (linked_cid, booking_date, time_slot)
+                ).fetchone()
+                if first:
+                    locked_group = get_kart_group(first['name'])
+                else:
+                    first = conn.execute(
+                        '''SELECT kt.name FROM circuit_manual_bookings cmb JOIN kart_types kt ON cmb.kart_type_id=kt.id
+                           WHERE cmb.account_id=? AND cmb.booking_date=? AND cmb.time_slot=? LIMIT 1''',
+                        (acc_id, booking_date, time_slot)
+                    ).fetchone()
+                    if first:
+                        locked_group = get_kart_group(first['name'])
+            if locked_group and chosen_group != locked_group:
+                group_label = 'Biplaza/Junior' if locked_group == 'B' else 'Adulto'
+                conn.close()
+                flash(f'Esta tanda ya está fijada como "{group_label}". No se pueden mezclar tipos de kart.', 'error')
+                return redirect(url_for('pitlane_dashboard'))
+
     conn.execute('''INSERT INTO circuit_manual_bookings
-        (account_id,booking_date,time_slot,num_pilots,contact_name,contact_phone,contact_email,notes)
-        VALUES (?,?,?,?,?,?,?,?)''',
-        (acc_id, booking_date, time_slot, num_pilots, contact_name, contact_phone, contact_email, notes))
+        (account_id,booking_date,time_slot,num_pilots,contact_name,contact_phone,contact_email,notes,kart_type_id)
+        VALUES (?,?,?,?,?,?,?,?,?)''',
+        (acc_id, booking_date, time_slot, num_pilots, contact_name, contact_phone, contact_email, notes, kart_type_id))
     conn.commit(); conn.close()
     flash(f'Reserva añadida para el {booking_date} a las {time_slot}.', 'success')
     return redirect(url_for('pitlane_dashboard') + '#bookings')
@@ -1998,6 +2130,20 @@ def pitlane_delete_booking(bid):
     conn.execute('DELETE FROM circuit_manual_bookings WHERE id=? AND account_id=?', (bid, session['circuit_id']))
     conn.commit(); conn.close()
     flash('Reserva eliminada.', 'info')
+    return redirect(url_for('pitlane_dashboard') + '#bookings')
+
+@app.route('/pitlane/booking/delete-pilot/<int:bid>', methods=['POST'])
+@pitlane_required
+def pitlane_delete_pilot_booking(bid):
+    conn = get_db()
+    linked = conn.execute('SELECT linked_circuit_id FROM circuit_accounts WHERE id=?', (session['circuit_id'],)).fetchone()
+    if linked and linked['linked_circuit_id']:
+        conn.execute('DELETE FROM bookings WHERE id=? AND circuit_id=?', (bid, linked['linked_circuit_id']))
+        conn.commit()
+        flash('Reserva del piloto eliminada.', 'info')
+    else:
+        flash('No tienes permiso para eliminar esta reserva.', 'error')
+    conn.close()
     return redirect(url_for('pitlane_dashboard') + '#bookings')
 
 @app.route('/pitlane/logout')
@@ -2081,8 +2227,8 @@ def google_callback():
         session['username'] = user['username']
         session['is_admin'] = False
         conn.close()
-        flash(f'Bienvenido a KARTNATION, {given_name or username}! Completa tu perfil.', 'success')
-        return redirect(url_for('profile'))
+        flash(f'Bienvenido a KARTNATION, {given_name or username}! Por favor completa tu perfil con tu fecha de nacimiento.', 'success')
+        return redirect(url_for('profile_edit'))
     except sqlite3.IntegrityError:
         conn.close()
         flash('Error al crear la cuenta. El email ya está en uso.', 'error')

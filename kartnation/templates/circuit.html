@@ -544,7 +544,7 @@
                 {% set pct = (data.count / circuit.max_per_session * 100)|int %}
                 {% set is_past = (selected_date == today and slot <= now) or selected_date < today %}
                 <div class="slot-card {% if is_past %}slot-past{% elif data.count >= circuit.max_per_session %}slot-full{% elif data.user_booked %}slot-booked{% endif %}"
-                     {% if not is_past %}onclick="openSlotModal('{{ slot }}', {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, '{{ data.locked_kart_name or '' }}')"{% endif %}>
+                     {% if not is_past %}onclick="openSlotModal('{{ slot }}', {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, '{{ data.locked_kart_name or '' }}', '{{ data.locked_kart_group or '' }}', '{{ data.kart_mix_policy or 'all' }}')"{% endif %}>
                     
                     {% if data.user_booked %}
                     <div class="slot-status-dot" style="background:var(--green);"></div>
@@ -761,7 +761,7 @@ function setLbTab(btn) {
         const lockedKartColor = '#FF4D00';
         if (kartTypes.length === 0) return '';
 
-        if (lockedKartId) {
+        if (lockedKartId && currentKartMixPolicy === 'separate') {
             const kt = kartTypes.find(k => k.id === lockedKartId) || {};
             const desc = kt.description || '';
             const cc = (kt.cc > 0 && !kt.name.toLowerCase().includes(kt.cc + 'cc') && !kt.name.toLowerCase().includes(kt.cc + ' cc')) ? kt.cc + 'cc' : (kt.cc === 0 && !kt.name.toLowerCase().includes('elec') ? 'Eléctrico' : '');
@@ -1046,5 +1046,78 @@ function setLbTab(btn) {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeModal();
     });
+
+    // Profile completion check before booking
+    {% if user %}
+    const missingDni = {{ 'true' if not user.dni else 'false' }};
+    const missingFecha = {{ 'true' if not user.fecha_nacimiento else 'false' }};
+
+    if (missingDni || missingFecha) {
+        const cartForm = document.getElementById('cartForm');
+        if (cartForm) {
+            cartForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                document.getElementById('profileCompleteModal').style.display = 'flex';
+            });
+        }
+    }
+
+    function closeProfileModal() {
+        document.getElementById('profileCompleteModal').style.display = 'none';
+    }
+
+    document.getElementById('profileCompleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeProfileModal();
+    });
+
+    async function submitProfileComplete(e) {
+        e.preventDefault();
+        const form = document.getElementById('profileCompleteForm');
+        const data = new FormData(form);
+        const btn = document.getElementById('profileCompleteBtn');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+        const res = await fetch('/api/complete-profile', { method: 'POST', body: data });
+        const json = await res.json();
+        if (json.ok) {
+            closeProfileModal();
+            document.getElementById('cartForm').submit();
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Guardar y reservar';
+            alert(json.error || 'Error al guardar. Inténtalo de nuevo.');
+        }
+    }
+    {% endif %}
 </script>
+
+{% if user %}
+<div id="profileCompleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:420px;position:relative;">
+        <div style="height:3px;background:var(--accent);border-radius:3px 3px 0 0;position:absolute;top:0;left:0;right:0;"></div>
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.06em;margin:0 0 0.5rem;">Completa tu perfil</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 1.5rem;">Para poder reservar necesitamos los siguientes datos. Solo se piden una vez.</p>
+        <form id="profileCompleteForm" onsubmit="submitProfileComplete(event)">
+            {% if not user.fecha_nacimiento %}
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.8rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.4rem;">Fecha de nacimiento <span style="color:var(--accent);">*</span></label>
+                <input type="date" name="fecha_nacimiento" required max="{{ today }}" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:0.9rem;color-scheme:dark;">
+            </div>
+            {% endif %}
+            {% if not user.dni %}
+            <div style="margin-bottom:1.5rem;">
+                <label style="display:block;font-size:0.8rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.4rem;">DNI <span style="color:var(--accent);">*</span></label>
+                <input type="text" name="dni" required placeholder="12345678A" maxlength="9" style="width:100%;padding:0.6rem 0.8rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:0.9rem;">
+            </div>
+            {% endif %}
+            <button id="profileCompleteBtn" type="submit" class="btn btn-primary btn-full" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;">
+                Guardar y reservar
+            </button>
+            <button type="button" onclick="closeProfileModal()" style="width:100%;margin-top:0.5rem;padding:0.5rem;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:0.85rem;cursor:pointer;">
+                Cancelar
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
