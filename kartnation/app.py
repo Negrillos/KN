@@ -1898,6 +1898,28 @@ def pitlane_delete_kart_type(kt_id):
     flash('Tipo de kart eliminado.', 'info')
     return redirect(url_for('pitlane_dashboard') + '#info')
 
+@app.route('/pitlane/kart-types/edit/<int:kt_id>', methods=['POST'])
+@pitlane_required
+def pitlane_edit_kart_type(kt_id):
+    acc_id = session['circuit_id']
+    name = request.form.get('kt_name', '').strip()
+    engine_cc = int(request.form.get('kt_cc', 0) or 0)
+    description = request.form.get('kt_desc', '').strip()
+    min_age = int(request.form.get('kt_age', 0) or 0)
+    price_per_session = float(request.form.get('kt_price', 0) or 0)
+    if name:
+        conn = get_db()
+        linked = conn.execute('SELECT linked_circuit_id FROM circuit_accounts WHERE id=?', (acc_id,)).fetchone()
+        if linked and linked['linked_circuit_id']:
+            conn.execute(
+                'UPDATE kart_types SET name=?, engine_cc=?, description=?, min_age=?, price_per_session=? WHERE id=? AND circuit_id=?',
+                (name, engine_cc, description, min_age, price_per_session, kt_id, linked['linked_circuit_id'])
+            )
+            conn.commit()
+            flash('Tipo de kart actualizado.', 'success')
+        conn.close()
+    return redirect(url_for('pitlane_dashboard') + '#info')
+
 @app.route('/pitlane/kart-mix-policy', methods=['POST'])
 @pitlane_required
 def pitlane_save_kart_mix_policy():
@@ -1971,11 +1993,28 @@ def pitlane_dashboard():
         if circuit_row and circuit_row['kart_mix_policy']:
             kart_mix_policy = circuit_row['kart_mix_policy']
     kart_types = [dict(k) for k in kart_types_raw]
+
+    # Build calendar data: { "YYYY-MM-DD": [ {slot, pilots, source, contact, kart}, ... ] }
+    from collections import defaultdict
+    _cal = defaultdict(list)
+    for b in all_bookings:
+        _cal[b['booking_date']].append({
+            'slot': b['time_slot'],
+            'pilots': b.get('num_pilots', 1) or 1,
+            'source': b.get('source', 'manual'),
+            'contact': b.get('contact_name') or '',
+            'kart': b.get('kart_name') or '',
+        })
+    for k in _cal:
+        _cal[k].sort(key=lambda x: x['slot'])
+    import json as _json
+    calendar_data = _json.dumps(dict(_cal))
+
     conn.close()
     return render_template('pitlane_dashboard.html',
         info=info, schedule=schedule, bookings=all_bookings, kart_types=kart_types,
         overrides=overrides, weekday_names=WEEKDAY_NAMES, today=today,
-        kart_mix_policy=kart_mix_policy)
+        kart_mix_policy=kart_mix_policy, calendar_data=calendar_data)
 
 @app.route('/pitlane/info', methods=['POST'])
 @pitlane_required

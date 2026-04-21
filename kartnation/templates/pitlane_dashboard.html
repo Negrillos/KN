@@ -1,347 +1,912 @@
 {% extends 'base.html' %}
-{% block title %}PitLane Dashboard — {{ session.circuit_name }}{% endblock %}
+{% block title %}PitLane — {{ session.circuit_name }}{% endblock %}
 
 {% block head %}
 <style>
-    .pl-header { padding:2rem 0 1.5rem; border-bottom:1px solid var(--border); margin-bottom:2rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
-    .pl-badge { font-family:'Barlow Condensed',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent); background:rgba(255,77,0,0.1); border:1px solid rgba(255,77,0,0.25); border-radius:3px; padding:0.2rem 0.6rem; margin-bottom:0.4rem; display:inline-block; }
-    .pl-title { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:0.02em; line-height:1; }
-    .pl-title span { color:var(--accent); }
-    .pl-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:2rem; overflow-x:auto; }
-    .pl-tab { font-family:'Barlow Condensed',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:0.75rem 1.25rem; color:var(--text-muted); background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.15s; white-space:nowrap; }
-    .pl-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(255,77,0,0.04); }
-    .pl-tab:hover:not(.active) { color:var(--text); }
-    .pl-section { display:none; }
-    .pl-section.active { display:block; }
-    .pl-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:1.5rem; }
-    .pl-card-top { height:3px; background:var(--accent); }
-    .pl-card-body { padding:1.5rem; }
-    .pl-card-title { font-family:'Barlow Condensed',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1.25rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); }
-    .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-    .fg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
-    @media(max-width:600px) { .fg2,.fg3 { grid-template-columns:1fr; } }
-    .sch-row { display:grid; grid-template-columns:110px 1fr 1fr auto; gap:0.75rem; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border); }
-    .sch-row:last-child { border-bottom:none; }
-    .sch-day { font-weight:600; font-size:0.88rem; }
-    .bk-table { width:100%; border-collapse:collapse; }
-    .bk-table th { font-family:'Barlow Condensed',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); text-align:left; }
-    .bk-table td { padding:0.65rem 0.75rem; border-bottom:1px solid var(--border); font-size:0.875rem; vertical-align:middle; }
-    .bk-table tr:last-child td { border-bottom:none; }
-    .time-badge { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:0.05em; }
-    /* Admin-style booking form */
-    .form-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; max-width:700px; }
-    .form-card-top { height:4px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
-    .form-card-body { padding:2rem; }
-    .form-section-title { font-family:'Barlow Condensed',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-    #slotInfo { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem 1rem; margin-top:0.5rem; font-size:0.82rem; color:var(--text-muted); display:none; }
+/* ── Layout ─────────────────────────────────────────────── */
+.pl-wrap {
+    display: flex;
+    min-height: calc(100vh - 60px);
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.pl-sidebar {
+    width: 248px;
+    min-width: 248px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+.pl-sidebar-header {
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.pl-sidebar-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(255,77,0,0.1);
+    border: 1px solid rgba(255,77,0,0.2);
+    border-radius: 4px;
+    padding: 0.15rem 0.55rem;
+    display: inline-block;
+    margin-bottom: 0.55rem;
+}
+
+.pl-sidebar-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.45rem;
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.pl-sidebar-name span { color: var(--accent); }
+
+.pl-sidebar-user {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.pl-nav {
+    flex: 1;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.pl-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.72rem 1rem;
+    border-radius: 11px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.pl-nav-item:hover:not(.active) {
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+}
+
+.pl-nav-item.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(255,77,0,0.35);
+}
+
+.pl-nav-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pl-nav-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.pl-sidebar-footer {
+    padding: 1rem 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* ── Main content ────────────────────────────────────────── */
+.pl-main {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    min-width: 0;
+}
+
+.pl-page-header {
+    margin-bottom: 1.75rem;
+}
+
+.pl-page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.9rem;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text);
+}
+
+.pl-page-title span { color: var(--accent); }
+
+.pl-section { display: none; }
+.pl-section.active { display: block; }
+
+/* ── Cards ───────────────────────────────────────────────── */
+.pl-card {
+    background: var(--bg2);
+    border: 1px solid rgba(255,77,0,0.18);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,0,0.06), 0 4px 32px rgba(255,77,0,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.pl-card:hover {
+    border-color: rgba(255,77,0,0.35);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,77,0,0.1), 0 6px 40px rgba(255,77,0,0.15);
+}
+
+.pl-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.pl-card-icon {
+    width: 30px;
+    height: 30px;
+    background: rgba(255,77,0,0.1);
+    border: 1px solid rgba(255,77,0,0.18);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pl-card-icon svg { width: 15px; height: 15px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.pl-card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.pl-card-body { padding: 1.5rem; }
+
+/* ── Grids ───────────────────────────────────────────────── */
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+/* ── Schedule ────────────────────────────────────────────── */
+.sch-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.sch-row:last-child { border-bottom: none; }
+.sch-day { font-weight: 600; font-size: 0.88rem; }
+
+/* ── Kart items ──────────────────────────────────────────── */
+.kart-item {
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    transition: border-color 0.15s;
+    overflow: hidden;
+}
+.kart-item:hover { border-color: var(--border-bright); }
+.kart-item.editing { border-color: rgba(255,77,0,0.35); }
+.kart-item-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+}
+.kart-item-name { font-weight: 600; flex: 1; font-size: 0.9rem; }
+.kart-chip {
+    font-size: 0.72rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+}
+.kart-chip.price { background: rgba(255,77,0,0.12); color: var(--accent); }
+.kart-edit-form {
+    display: none;
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+}
+.kart-item.editing .kart-edit-form { display: block; }
+
+/* ── Bookings table ──────────────────────────────────────── */
+.bk-table { width: 100%; border-collapse: collapse; }
+.bk-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+.bk-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+.bk-table tr:last-child td { border-bottom: none; }
+.bk-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.time-badge { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; }
+
+/* ── Manual booking form ─────────────────────────────────── */
+.form-card {
+    background: var(--bg2);
+    border: 1px solid rgba(255,77,0,0.18);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,0,0.06), 0 4px 32px rgba(255,77,0,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.form-card:hover {
+    border-color: rgba(255,77,0,0.35);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,77,0,0.1), 0 6px 40px rgba(255,77,0,0.15);
+}
+.form-card-top { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.form-card-body { padding: 1.75rem; }
+.form-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+#slotInfo {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    display: none;
+}
+
+/* ── Override list ───────────────────────────────────────── */
+.override-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Mix policy labels ───────────────────────────────────── */
+.mix-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 0.5rem;
+}
+.mix-label.checked {
+    border-color: var(--accent);
+    background: rgba(255,77,0,0.07);
+}
+
+/* ── Source badge ────────────────────────────────────────── */
+.src-badge {
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.src-pilot { background: rgba(124,255,0,0.1); color: #7CFF00; border: 1px solid rgba(124,255,0,0.25); }
+.src-manual { background: rgba(255,77,0,0.1); color: var(--accent); border: 1px solid rgba(255,77,0,0.25); }
+
+/* ── Calendar ────────────────────────────────────────────── */
+.cal-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+.cal-card { min-width: 0; }
+.cal-detail-card { min-width: 0; }
+.cal-nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+}
+.cal-nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+.cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 0.4rem;
+}
+.cal-weekdays span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 0.25rem 0;
+}
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+.cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.12s, color 0.12s;
+    color: var(--text-muted);
+    user-select: none;
+}
+.cal-day.other-month { color: var(--text-dim); opacity: 0.4; }
+.cal-day.today { color: var(--text); font-weight: 700; }
+.cal-day.today::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+.cal-day.has-bookings { color: var(--text); }
+.cal-day.has-bookings .cal-dot {
+    display: block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    bottom: 4px;
+}
+.cal-day:hover:not(.empty) { background: rgba(255,255,255,0.06); }
+.cal-day.selected {
+    background: var(--accent) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 12px rgba(255,77,0,0.4);
+}
+.cal-day.selected .cal-dot { background: #fff; }
+.cal-day.selected::after { display: none; }
+.cal-dot { display: none; }
+.cal-day.empty { cursor: default; pointer-events: none; }
+
+/* Slot items inside detail panel */
+.cal-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    transition: border-color 0.15s;
+}
+.cal-slot:hover { border-color: rgba(255,77,0,0.3); }
+.cal-slot-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    min-width: 56px;
+    line-height: 1;
+}
+.cal-slot-info { flex: 1; min-width: 0; }
+.cal-slot-contact { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-slot-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; }
+.cal-slot-pilots {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+.cal-slot-pilots span { font-family: 'Barlow', sans-serif; font-size: 0.7rem; color: var(--text-dim); font-weight: 500; }
+.cal-empty-day { text-align: center; padding: 2.5rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media(max-width: 768px) {
+    .pl-wrap { flex-direction: column; }
+    .pl-sidebar { width: 100%; min-width: unset; height: auto; position: relative; top: 0; }
+    .pl-nav { flex-direction: row; flex-wrap: wrap; padding: 0.75rem; }
+    .pl-nav-item { width: auto; flex: 1; min-width: 100px; justify-content: center; }
+    .pl-main { padding: 1.25rem; }
+    .fg2, .fg3 { grid-template-columns: 1fr; }
+    .sch-row { grid-template-columns: 90px 1fr 1fr auto; }
+    .form-row { grid-template-columns: 1fr; }
+    .cal-layout { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="pl-wrap">
 
-    <div class="pl-header">
-        <div>
-            <div class="pl-badge">PitLane — Panel de circuito</div>
-            <div class="pl-title"><span>{{ session.circuit_name }}</span></div>
-            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem;">@{{ session.circuit_username }}</div>
+    <!-- ── Sidebar ─────────────────────────────────────── -->
+    <aside class="pl-sidebar">
+        <div class="pl-sidebar-header">
+            <div class="pl-sidebar-badge">PitLane</div>
+            <div class="pl-sidebar-name"><span>{{ session.circuit_name }}</span></div>
+            <div class="pl-sidebar-user">@{{ session.circuit_username }}</div>
         </div>
-        <a href="{{ url_for('pitlane_logout') }}" class="btn btn-secondary btn-sm">Cerrar sesión</a>
-    </div>
 
-    <div class="pl-tabs">
-        <button class="pl-tab active" onclick="showTab('info',this)">Información</button>
-        <button class="pl-tab" onclick="showTab('schedule',this)">Horarios</button>
-        <button class="pl-tab" onclick="showTab('bookings',this)">Reservas manuales</button>
-    </div>
+        <nav class="pl-nav">
+            <button class="pl-nav-item active" onclick="showTab('info',this)">
+                <span class="pl-nav-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6M9 8h6M9 16h4"/></svg>
+                </span>
+                Información
+            </button>
+            <button class="pl-nav-item" onclick="showTab('schedule',this)">
+                <span class="pl-nav-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </span>
+                Horarios
+            </button>
+            <button class="pl-nav-item" onclick="showTab('bookings',this)">
+                <span class="pl-nav-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                </span>
+                Reservas
+            </button>
+            <button class="pl-nav-item" onclick="showTab('calendar',this)">
+                <span class="pl-nav-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>
+                </span>
+                Calendario
+            </button>
+        </nav>
 
-    <!-- INFO -->
-    <div class="pl-section active" id="tab-info">
-        <div class="pl-card">
-            <div class="pl-card-top"></div>
-            <div class="pl-card-body">
-                <div class="pl-card-title">Datos del circuito</div>
-                <form method="POST" action="{{ url_for('pitlane_save_info') }}">
-                    <div class="fg2">
-                        <div class="form-group"><label>Nombre del circuito *</label><input type="text" name="display_name" value="{{ info.display_name if info else '' }}" placeholder="Karting Barcelona..." required></div>
-                        <div class="form-group"><label>Población *</label><input type="text" name="city" value="{{ info.city if info else '' }}" placeholder="Barcelona" required></div>
-                    </div>
-                    <div class="form-group"><label>Dirección completa</label><input type="text" name="address" value="{{ info.address if info else '' }}" placeholder="Calle, número, código postal..."></div>
-                    <div class="fg3">
-                        <div class="form-group"><label>Longitud de pista (m)</label><input type="number" name="length_m" value="{{ info.length_m if info else '' }}" placeholder="850" min="0"></div>
-                        <div class="form-group"><label>Pilotos máx. por tanda</label><input type="number" name="max_per_session" value="{{ info.max_per_session if info else 12 }}" min="1" max="30"></div>
-                    </div>
-                    <div class="fg2">
-                        <div class="form-group"><label>Teléfono</label><input type="tel" name="phone" value="{{ info.phone if info else '' }}" placeholder="+34 600 000 000"></div>
-                        <div class="form-group"><label>Sitio web</label><input type="url" name="website" value="{{ info.website if info else '' }}" placeholder="https://..."></div>
-                    </div>
-                    <div class="form-group"><label>Descripción breve</label><textarea name="description" rows="3" placeholder="Describe tu circuito...">{{ info.description if info else '' }}</textarea></div>
-                    <button type="submit" class="btn btn-primary">Guardar información</button>
-                </form>
+        <div class="pl-sidebar-footer">
+            <a href="{{ url_for('pitlane_logout') }}" class="btn btn-secondary btn-sm" style="width:100%;text-align:center;border-radius:10px;justify-content:center;">
+                Cerrar sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── Main ──────────────────────────────────────────── -->
+    <main class="pl-main">
+
+        <!-- ══ INFO ══════════════════════════════════════ -->
+        <div class="pl-section active" id="tab-info">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Información <span>del circuito</span></div>
             </div>
-        </div>
 
-        <!-- Tipos de kart -->
-        <div class="pl-card">
-            <div class="pl-card-top"></div>
-            <div class="pl-card-body">
-                <div class="pl-card-title">Tipos de kart</div>
-                {% if kart_types %}
-                <div style="margin-bottom:1rem;">
-                    {% for kt in kart_types %}
-                    <div style="display:flex;align-items:center;gap:1rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                        <span style="font-weight:600;flex:1;">{{ kt.name }}</span>
-                        {% if kt.engine_cc %}<span style="color:var(--text-muted);font-size:0.82rem;">{{ kt.engine_cc }}cc</span>{% endif %}
-                        {% if kt.min_age %}<span style="color:var(--text-muted);font-size:0.82rem;">+{{ kt.min_age }} años</span>{% endif %}
-                        {% if kt.price_per_session %}<span style="color:var(--accent);font-size:0.82rem;font-weight:700;">{{ "%.2f"|format(kt.price_per_session) }}€</span>{% endif %}
-                        <form method="POST" action="{{ url_for('pitlane_delete_kart_type', kt_id=kt.id) }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
+            <!-- Datos generales -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                     </div>
-                    {% endfor %}
+                    <div class="pl-card-title">Datos del circuito</div>
                 </div>
-                {% endif %}
-                <form method="POST" action="{{ url_for('pitlane_save_kart_type') }}">
-                    <div class="fg3">
-                        <div class="form-group"><label>Nombre *</label><input type="text" name="kt_name" placeholder="Kart Adulto 270cc" required></div>
-                        <div class="form-group"><label>Cilindrada (cc)</label><input type="number" name="kt_cc" placeholder="270" min="0"></div>
-                        <div class="form-group"><label>Edad mínima</label><input type="number" name="kt_age" placeholder="14" min="0"></div>
-                    </div>
-                    <div class="fg2">
-                        <div class="form-group"><label>Precio por tanda (€)</label><input type="number" name="kt_price" placeholder="20.00" min="0" step="0.50"></div>
-                        <div class="form-group"><label>Descripción</label><input type="text" name="kt_desc" placeholder="Kart estándar para adultos..."></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm">Añadir tipo de kart</button>
-                </form>
-
-                <!-- Compatibilidad de karts en la misma tanda -->
-                <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Compatibilidad en la misma tanda</div>
-                    <form method="POST" action="{{ url_for('pitlane_save_kart_mix_policy') }}">
-                        <div id="kart-mix-options" style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;">
-                            <label data-mix-label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;padding:0.75rem 1rem;border-radius:6px;border:1.5px solid {% if kart_mix_policy == 'all' %}var(--accent){% else %}var(--border){% endif %};background:{% if kart_mix_policy == 'all' %}color-mix(in srgb,var(--accent) 8%,transparent){% else %}transparent{% endif %};">
-                                <input type="radio" name="kart_mix_policy" value="all" {% if kart_mix_policy == 'all' %}checked{% endif %} style="margin-top:2px;accent-color:var(--accent);">
-                                <div>
-                                    <div style="font-weight:700;font-size:0.92rem;">🟢 Todos juntos</div>
-                                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">Adultos, biplazas y juniors pueden coincidir en la misma tanda sin restricciones.</div>
-                                </div>
-                            </label>
-                            <label data-mix-label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;padding:0.75rem 1rem;border-radius:6px;border:1.5px solid {% if kart_mix_policy == 'separate' %}var(--accent){% else %}var(--border){% endif %};background:{% if kart_mix_policy == 'separate' %}color-mix(in srgb,var(--accent) 8%,transparent){% else %}transparent{% endif %};">
-                                <input type="radio" name="kart_mix_policy" value="separate" {% if kart_mix_policy == 'separate' %}checked{% endif %} style="margin-top:2px;accent-color:var(--accent);">
-                                <div>
-                                    <div style="font-weight:700;font-size:0.92rem;">🔴 Adulto separado de biplaza/junior</div>
-                                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">La primera reserva de una tanda fija el grupo. Los adultos no pueden compartir tanda con biplazas ni juniors.</div>
-                                </div>
-                            </label>
+                <div class="pl-card-body">
+                    <form method="POST" action="{{ url_for('pitlane_save_info') }}">
+                        <div class="fg2">
+                            <div class="form-group"><label>Nombre del circuito *</label><input type="text" name="display_name" value="{{ info.display_name if info else '' }}" placeholder="Karting Barcelona..." required></div>
+                            <div class="form-group"><label>Población *</label><input type="text" name="city" value="{{ info.city if info else '' }}" placeholder="Barcelona" required></div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm">Guardar compatibilidad</button>
-                        <script>
-                        (function(){
-                            var labels = document.querySelectorAll('[data-mix-label]');
-                            labels.forEach(function(lbl){
-                                lbl.querySelector('input[type=radio]').addEventListener('change', function(){
-                                    labels.forEach(function(l){
-                                        var checked = l.querySelector('input[type=radio]').checked;
-                                        l.style.border = '1.5px solid ' + (checked ? 'var(--accent)' : 'var(--border)');
-                                        l.style.background = checked ? 'color-mix(in srgb,var(--accent) 8%,transparent)' : 'transparent';
-                                    });
-                                });
-                            });
-                        })();
-                        </script>
+                        <div class="form-group"><label>Dirección completa</label><input type="text" name="address" value="{{ info.address if info else '' }}" placeholder="Calle, número, código postal..."></div>
+                        <div class="fg3">
+                            <div class="form-group"><label>Longitud de pista (m)</label><input type="number" name="length_m" value="{{ info.length_m if info else '' }}" placeholder="850" min="0"></div>
+                            <div class="form-group"><label>Pilotos máx. por tanda</label><input type="number" name="max_per_session" value="{{ info.max_per_session if info else 12 }}" min="1" max="30"></div>
+                        </div>
+                        <div class="fg2">
+                            <div class="form-group"><label>Teléfono</label><input type="tel" name="phone" value="{{ info.phone if info else '' }}" placeholder="+34 600 000 000"></div>
+                            <div class="form-group"><label>Sitio web</label><input type="url" name="website" value="{{ info.website if info else '' }}" placeholder="https://..."></div>
+                        </div>
+                        <div class="form-group"><label>Descripción breve</label><textarea name="description" rows="3" placeholder="Describe tu circuito...">{{ info.description if info else '' }}</textarea></div>
+                        <button type="submit" class="btn btn-primary">Guardar información</button>
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- HORARIOS -->
-    <div class="pl-section" id="tab-schedule">
-        <div class="pl-card">
-            <div class="pl-card-top"></div>
-            <div class="pl-card-body">
-                <div class="pl-card-title">Horario semanal normal</div>
-                <form method="POST" action="{{ url_for('pitlane_save_schedule') }}">
-                    {% set sch = {} %}
-                    {% for s in schedule %}{% set _ = sch.update({s.weekday: s}) %}{% endfor %}
-                    {% for wd in range(7) %}{% set s = sch.get(wd) %}
-                    <div class="sch-row">
-                        <div class="sch-day">{{ weekday_names[wd] }}</div>
-                        <input type="time" name="open_{{ wd }}" value="{{ s.open_time if s else '' }}" id="open_{{ wd }}" {% if s and s.is_closed %}disabled style="opacity:0.3;"{% endif %}>
-                        <input type="time" name="close_{{ wd }}" value="{{ s.close_time if s else '' }}" id="close_{{ wd }}" {% if s and s.is_closed %}disabled style="opacity:0.3;"{% endif %}>
-                        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;">
-                            <input type="checkbox" name="closed_{{ wd }}" value="1" {% if s and s.is_closed %}checked{% endif %} onchange="toggleDay({{ wd }},this.checked)" style="accent-color:var(--red);">
-                            Cerrado
-                        </label>
+            <!-- Tipos de kart -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     </div>
-                    {% endfor %}
-                    <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Guardar horario</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="pl-card">
-            <div class="pl-card-top"></div>
-            <div class="pl-card-body">
-                <div class="pl-card-title">Cambiar horario de un día concreto</div>
-                <form method="POST" action="{{ url_for('pitlane_save_override') }}">
-                    <div class="fg2">
-                        <div class="form-group"><label>Fecha *</label><input type="date" name="override_date" min="{{ today }}" required></div>
-                        <div class="form-group"><label>Motivo (opcional)</label><input type="text" name="override_reason" placeholder="Festivo, evento especial..."></div>
-                    </div>
-                    <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
-                        <div class="form-group"><label>Apertura</label><input type="time" name="override_open" id="ovOpen"></div>
-                        <div class="form-group"><label>Cierre</label><input type="time" name="override_close" id="ovClose"></div>
-                        <div class="form-group" style="padding-bottom:0.5rem;">
-                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                                <input type="checkbox" name="override_closed" value="1" onchange="document.getElementById('ovOpen').disabled=this.checked;document.getElementById('ovClose').disabled=this.checked;" style="accent-color:var(--red);">
-                                Cerrado ese día
-                            </label>
+                    <div class="pl-card-title">Tipos de kart</div>
+                </div>
+                <div class="pl-card-body">
+                    {% if kart_types %}
+                    <div style="margin-bottom:1.25rem;">
+                        {% for kt in kart_types %}
+                        <div class="kart-item" id="kart-{{ kt.id }}">
+                            <div class="kart-item-row">
+                                <span class="kart-item-name">{{ kt.name }}</span>
+                                {% if kt.engine_cc %}<span class="kart-chip">{{ kt.engine_cc }}cc</span>{% endif %}
+                                {% if kt.min_age %}<span class="kart-chip">+{{ kt.min_age }} años</span>{% endif %}
+                                {% if kt.price_per_session %}<span class="kart-chip price">{{ "%.2f"|format(kt.price_per_session) }}€</span>{% endif %}
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleKartEdit({{ kt.id }})">Editar</button>
+                                <form method="POST" action="{{ url_for('pitlane_delete_kart_type', kt_id=kt.id) }}" onsubmit="return confirm('¿Eliminar este tipo de kart?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                            </div>
+                            <div class="kart-edit-form">
+                                <form method="POST" action="{{ url_for('pitlane_edit_kart_type', kt_id=kt.id) }}">
+                                    <div class="fg3" style="margin-bottom:0.75rem;">
+                                        <div class="form-group" style="margin-bottom:0;"><label>Nombre *</label><input type="text" name="kt_name" value="{{ kt.name }}" required></div>
+                                        <div class="form-group" style="margin-bottom:0;"><label>Cilindrada (cc)</label><input type="number" name="kt_cc" value="{{ kt.engine_cc or '' }}" min="0"></div>
+                                        <div class="form-group" style="margin-bottom:0;"><label>Edad mínima</label><input type="number" name="kt_age" value="{{ kt.min_age or '' }}" min="0"></div>
+                                    </div>
+                                    <div class="fg2" style="margin-bottom:0.75rem;">
+                                        <div class="form-group" style="margin-bottom:0;"><label>Precio por tanda (€)</label><input type="number" name="kt_price" value="{{ kt.price_per_session or '' }}" min="0" step="0.50"></div>
+                                        <div class="form-group" style="margin-bottom:0;"><label>Descripción</label><input type="text" name="kt_desc" value="{{ kt.description or '' }}"></div>
+                                    </div>
+                                    <div style="display:flex;gap:0.5rem;">
+                                        <button type="submit" class="btn btn-primary btn-sm">Guardar cambios</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleKartEdit({{ kt.id }})">Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:0.5rem;">Añadir cambio</button>
+                        {% endfor %}
                     </div>
-                </form>
-                {% if overrides %}
-                <div style="margin-top:1.25rem;">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Próximos cambios</div>
-                    {% for ov in overrides %}
-                    <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
-                        <span style="font-weight:600;min-width:100px;">{{ ov.override_date }}</span>
-                        {% if ov.is_closed %}<span style="color:var(--red);font-size:0.82rem;">Cerrado</span>
-                        {% else %}<span style="font-size:0.82rem;color:var(--text-muted);">{{ ov.open_time }} – {{ ov.close_time }}</span>{% endif %}
-                        {% if ov.reason %}<span style="font-size:0.78rem;color:var(--text-dim);">{{ ov.reason }}</span>{% endif %}
-                        <form method="POST" action="{{ url_for('pitlane_delete_override', oid=ov.id) }}" style="margin-left:auto;">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    {% endif %}
+
+                    <div style="padding-top:{{ '1rem' if kart_types else '0' }};{% if kart_types %}border-top:1px solid var(--border);{% endif %}">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Añadir nuevo tipo</div>
+                        <form method="POST" action="{{ url_for('pitlane_save_kart_type') }}">
+                            <div class="fg3">
+                                <div class="form-group"><label>Nombre *</label><input type="text" name="kt_name" placeholder="Kart Adulto 270cc" required></div>
+                                <div class="form-group"><label>Cilindrada (cc)</label><input type="number" name="kt_cc" placeholder="270" min="0"></div>
+                                <div class="form-group"><label>Edad mínima</label><input type="number" name="kt_age" placeholder="14" min="0"></div>
+                            </div>
+                            <div class="fg2">
+                                <div class="form-group"><label>Precio por tanda (€)</label><input type="number" name="kt_price" placeholder="20.00" min="0" step="0.50"></div>
+                                <div class="form-group"><label>Descripción</label><input type="text" name="kt_desc" placeholder="Kart estándar para adultos..."></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Añadir tipo de kart</button>
                         </form>
                     </div>
-                    {% endfor %}
+
+                    <!-- Compatibilidad karts -->
+                    <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Compatibilidad en la misma tanda</div>
+                        <form method="POST" action="{{ url_for('pitlane_save_kart_mix_policy') }}">
+                            <div id="kart-mix-options">
+                                <label class="mix-label {{ 'checked' if kart_mix_policy == 'all' }}">
+                                    <input type="radio" name="kart_mix_policy" value="all" {% if kart_mix_policy == 'all' %}checked{% endif %} style="margin-top:3px;accent-color:var(--accent);">
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.9rem;">Todos juntos</div>
+                                        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">Adultos, biplazas y juniors pueden coincidir sin restricciones.</div>
+                                    </div>
+                                </label>
+                                <label class="mix-label {{ 'checked' if kart_mix_policy == 'separate' }}">
+                                    <input type="radio" name="kart_mix_policy" value="separate" {% if kart_mix_policy == 'separate' %}checked{% endif %} style="margin-top:3px;accent-color:var(--accent);">
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.9rem;">Adulto separado de biplaza/junior</div>
+                                        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.15rem;">La primera reserva de una tanda fija el grupo.</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Guardar compatibilidad</button>
+                        </form>
+                    </div>
                 </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- RESERVAS -->
-    <div class="pl-section" id="tab-bookings">
-
-        <!-- Formulario igual que admin -->
-        <div class="form-card" style="max-width:100%;margin-bottom:1.5rem;">
-            <div class="form-card-top"></div>
-            <div class="form-card-body">
-                <form method="POST" action="{{ url_for('pitlane_add_booking') }}" id="plBookingForm">
-
-                    <div class="form-section-title">1. Horario</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Fecha</label>
-                            <input type="date" id="pl_date" name="booking_date" min="{{ today }}" required onchange="plLoadSlots()">
-                        </div>
-                        <div class="form-group">
-                            <label>Hora de la tanda</label>
-                            <select id="pl_slot" name="time_slot" required onchange="plCheckCapacity()">
-                                <option value="">— Selecciona primero la fecha —</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="slotInfo"></div>
-
-                    <div class="form-group">
-                        <label>Tipo de kart</label>
-                        <select id="pl_kart" name="kart_type_id">
-                            {% if kart_types %}
-                                {% for kt in kart_types %}
-                                <option value="{{ kt.id }}" data-group="{{ 'B' if ('biplaza' in kt.name|lower or 'junior' in kt.name|lower or 'infantil' in kt.name|lower) else 'A' }}">{{ kt.name }}{% if kt.engine_cc %} ({{ kt.engine_cc }}cc){% endif %}</option>
-                                {% endfor %}
-                            {% else %}
-                                <option value="">— Sin tipos de kart configurados —</option>
-                            {% endif %}
-                        </select>
-                        <div id="kartLockMsg" style="display:none;margin-top:0.4rem;font-size:0.78rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Número de pilotos</label>
-                        <input type="number" id="pl_pilots" name="num_pilots" value="1" min="1" max="{{ info.max_per_session if info else 12 }}" required onchange="plCheckCapacity()">
-                    </div>
-
-                    <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
-                    <div class="form-section-title">2. Datos de contacto</div>
-
-                    <div class="form-group">
-                        <label>Nombre del contacto <span style="color:var(--red);">*</span></label>
-                        <input type="text" name="contact_name" placeholder="Nombre completo del piloto o responsable del grupo" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Teléfono</label><input type="tel" name="contact_phone" placeholder="+34 600 000 000"></div>
-                        <div class="form-group"><label>Email</label><input type="email" name="contact_email" placeholder="piloto@email.com"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Notas adicionales</label>
-                        <textarea name="notes" rows="3" placeholder="Observaciones, solicitudes especiales, forma de pago..." style="resize:vertical;"></textarea>
-                    </div>
-
-                    <div style="display:flex;gap:1rem;margin-top:0.5rem;">
-                        <button type="submit" class="btn btn-primary" style="flex:1;">Confirmar reserva manual</button>
-                        <button type="reset" class="btn btn-secondary" onclick="plLoadSlots()">Cancelar</button>
-                    </div>
-                </form>
             </div>
         </div>
 
-        <!-- Tabla de reservas -->
-        <div class="pl-card">
-            <div class="pl-card-top"></div>
-            <div class="pl-card-body">
-                <div class="pl-card-title">Reservas registradas ({{ bookings|length }})</div>
-                {% if bookings %}
-                <div style="overflow-x:auto;">
-                    <table class="bk-table">
-                        <thead><tr>
-                            <th>Origen</th><th>Fecha</th><th>Hora</th><th>Pilotos</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Kart</th><th>Notas</th><th></th>
-                        </tr></thead>
-                        <tbody>
-                        {% for b in bookings %}
-                        <tr>
-                            <td>
-                                {% if b.source == 'pilot' %}
-                                <span style="background:rgba(124,255,0,0.12);color:#7CFF00;border:1px solid rgba(124,255,0,0.3);border-radius:4px;padding:0.15rem 0.5rem;font-size:0.72rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">🏎 Piloto</span>
-                                {% else %}
-                                <span style="background:rgba(255,77,0,0.12);color:var(--accent);border:1px solid rgba(255,77,0,0.3);border-radius:4px;padding:0.15rem 0.5rem;font-size:0.72rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">✍ Manual</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ b.booking_date }}</td>
-                            <td><span class="time-badge">{{ b.time_slot }}</span></td>
-                            <td style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--accent);">{{ b.num_pilots }}</td>
-                            <td style="font-weight:600;">{{ b.contact_name }}</td>
-                            <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.contact_phone or '—' }}</td>
-                            <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.contact_email or '—' }}</td>
-                            <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.kart_name or '—' }}</td>
-                            <td style="color:var(--text-muted);font-size:0.8rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.notes or '—' }}</td>
-                            <td>
-                                {% if b.source == 'manual' %}
-                                <form method="POST" action="{{ url_for('pitlane_delete_booking', bid=b.id) }}" onsubmit="return confirm('¿Eliminar esta reserva?')">
-                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                </form>
-                                {% else %}
-                                <form method="POST" action="{{ url_for('pitlane_delete_pilot_booking', bid=b.id) }}" onsubmit="return confirm('¿Eliminar la reserva de este piloto?')">
-                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                </form>
-                                {% endif %}
-                            </td>
-                        </tr>
+        <!-- ══ HORARIOS ════════════════════════════════════ -->
+        <div class="pl-section" id="tab-schedule">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Horarios <span>del circuito</span></div>
+            </div>
+
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <div class="pl-card-title">Horario semanal normal</div>
+                </div>
+                <div class="pl-card-body">
+                    <form method="POST" action="{{ url_for('pitlane_save_schedule') }}">
+                        {% set sch = {} %}
+                        {% for s in schedule %}{% set _ = sch.update({s.weekday: s}) %}{% endfor %}
+                        {% for wd in range(7) %}{% set s = sch.get(wd) %}
+                        <div class="sch-row">
+                            <div class="sch-day">{{ weekday_names[wd] }}</div>
+                            <input type="time" name="open_{{ wd }}" value="{{ s.open_time if s else '' }}" id="open_{{ wd }}" {% if s and s.is_closed %}disabled style="opacity:0.3;"{% endif %}>
+                            <input type="time" name="close_{{ wd }}" value="{{ s.close_time if s else '' }}" id="close_{{ wd }}" {% if s and s.is_closed %}disabled style="opacity:0.3;"{% endif %}>
+                            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;">
+                                <input type="checkbox" name="closed_{{ wd }}" value="1" {% if s and s.is_closed %}checked{% endif %} onchange="toggleDay({{ wd }},this.checked)" style="accent-color:var(--red);">
+                                Cerrado
+                            </label>
+                        </div>
                         {% endfor %}
-                        </tbody>
-                    </table>
+                        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Guardar horario</button>
+                    </form>
                 </div>
-                {% else %}
-                <div style="text-align:center;padding:2rem;color:var(--text-dim);">Sin reservas registradas aún.</div>
-                {% endif %}
+            </div>
+
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                    </div>
+                    <div class="pl-card-title">Cambiar horario de un día concreto</div>
+                </div>
+                <div class="pl-card-body">
+                    <form method="POST" action="{{ url_for('pitlane_save_override') }}">
+                        <div class="fg2">
+                            <div class="form-group"><label>Fecha *</label><input type="date" name="override_date" min="{{ today }}" required></div>
+                            <div class="form-group"><label>Motivo (opcional)</label><input type="text" name="override_reason" placeholder="Festivo, evento especial..."></div>
+                        </div>
+                        <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                            <div class="form-group"><label>Apertura</label><input type="time" name="override_open" id="ovOpen"></div>
+                            <div class="form-group"><label>Cierre</label><input type="time" name="override_close" id="ovClose"></div>
+                            <div class="form-group" style="padding-bottom:0.5rem;">
+                                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                    <input type="checkbox" name="override_closed" value="1" onchange="document.getElementById('ovOpen').disabled=this.checked;document.getElementById('ovClose').disabled=this.checked;" style="accent-color:var(--red);">
+                                    Cerrado ese día
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:0.5rem;">Añadir cambio</button>
+                        </div>
+                    </form>
+
+                    {% if overrides %}
+                    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;">Próximos cambios</div>
+                        {% for ov in overrides %}
+                        <div class="override-item">
+                            <span style="font-weight:600;min-width:100px;">{{ ov.override_date }}</span>
+                            {% if ov.is_closed %}
+                                <span style="color:var(--red);font-size:0.82rem;font-weight:600;">Cerrado</span>
+                            {% else %}
+                                <span style="font-size:0.82rem;color:var(--text-muted);">{{ ov.open_time }} – {{ ov.close_time }}</span>
+                            {% endif %}
+                            {% if ov.reason %}<span style="font-size:0.78rem;color:var(--text-dim);">{{ ov.reason }}</span>{% endif %}
+                            <form method="POST" action="{{ url_for('pitlane_delete_override', oid=ov.id) }}" style="margin-left:auto;">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- ══ RESERVAS ════════════════════════════════════ -->
+        <div class="pl-section" id="tab-bookings">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Reservas <span>manuales</span></div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="form-card">
+                <div class="form-card-top"></div>
+                <div class="form-card-body">
+                    <form method="POST" action="{{ url_for('pitlane_add_booking') }}" id="plBookingForm">
+                        <div class="form-section-title">1. Horario</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha</label>
+                                <input type="date" id="pl_date" name="booking_date" min="{{ today }}" required onchange="plLoadSlots()">
+                            </div>
+                            <div class="form-group">
+                                <label>Hora de la tanda</label>
+                                <select id="pl_slot" name="time_slot" required onchange="plCheckCapacity()">
+                                    <option value="">— Selecciona primero la fecha —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="slotInfo"></div>
+                        <div class="form-group">
+                            <label>Tipo de kart</label>
+                            <select id="pl_kart" name="kart_type_id">
+                                {% if kart_types %}
+                                    {% for kt in kart_types %}
+                                    <option value="{{ kt.id }}" data-group="{{ 'B' if ('biplaza' in kt.name|lower or 'junior' in kt.name|lower or 'infantil' in kt.name|lower) else 'A' }}">{{ kt.name }}{% if kt.engine_cc %} ({{ kt.engine_cc }}cc){% endif %}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="">— Sin tipos de kart configurados —</option>
+                                {% endif %}
+                            </select>
+                            <div id="kartLockMsg" style="display:none;margin-top:0.4rem;font-size:0.78rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:6px;padding:0.5rem 0.75rem;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Número de pilotos</label>
+                            <input type="number" id="pl_pilots" name="num_pilots" value="1" min="1" max="{{ info.max_per_session if info else 12 }}" required onchange="plCheckCapacity()">
+                        </div>
+
+                        <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
+                        <div class="form-section-title">2. Datos de contacto</div>
+
+                        <div class="form-group">
+                            <label>Nombre del contacto <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="contact_name" placeholder="Nombre completo del piloto o responsable del grupo" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Teléfono</label><input type="tel" name="contact_phone" placeholder="+34 600 000 000"></div>
+                            <div class="form-group"><label>Email</label><input type="email" name="contact_email" placeholder="piloto@email.com"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas adicionales</label>
+                            <textarea name="notes" rows="3" placeholder="Observaciones, solicitudes especiales, forma de pago..." style="resize:vertical;"></textarea>
+                        </div>
+                        <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+                            <button type="submit" class="btn btn-primary" style="flex:1;">Confirmar reserva manual</button>
+                            <button type="reset" class="btn btn-secondary" onclick="plLoadSlots()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla de reservas -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    </div>
+                    <div class="pl-card-title">Reservas registradas ({{ bookings|length }})</div>
+                </div>
+                <div class="pl-card-body">
+                    {% if bookings %}
+                    <div style="overflow-x:auto;">
+                        <table class="bk-table">
+                            <thead><tr>
+                                <th>Origen</th><th>Fecha</th><th>Hora</th><th>Pilotos</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Kart</th><th>Notas</th><th></th>
+                            </tr></thead>
+                            <tbody>
+                            {% for b in bookings %}
+                            <tr>
+                                <td>
+                                    {% if b.source == 'pilot' %}
+                                    <span class="src-badge src-pilot">🏎 Piloto</span>
+                                    {% else %}
+                                    <span class="src-badge src-manual">✍ Manual</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ b.booking_date }}</td>
+                                <td><span class="time-badge">{{ b.time_slot }}</span></td>
+                                <td style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--accent);">{{ b.num_pilots }}</td>
+                                <td style="font-weight:600;">{{ b.contact_name }}</td>
+                                <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.contact_phone or '—' }}</td>
+                                <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.contact_email or '—' }}</td>
+                                <td style="color:var(--text-muted);font-size:0.82rem;">{{ b.kart_name or '—' }}</td>
+                                <td style="color:var(--text-muted);font-size:0.8rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.notes or '—' }}</td>
+                                <td>
+                                    {% if b.source == 'manual' %}
+                                    <form method="POST" action="{{ url_for('pitlane_delete_booking', bid=b.id) }}" onsubmit="return confirm('¿Eliminar esta reserva?')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('pitlane_delete_pilot_booking', bid=b.id) }}" onsubmit="return confirm('¿Eliminar la reserva de este piloto?')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="text-align:center;padding:3rem 2rem;color:var(--text-dim);">
+                        <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.4;">🏁</div>
+                        Sin reservas registradas aún.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ CALENDARIO ══════════════════════════════════ -->
+        <div class="pl-section" id="tab-calendar">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Calendario <span>de tandas</span></div>
+            </div>
+
+            <div class="cal-layout">
+                <!-- Panel izquierdo: calendario mensual -->
+                <div class="pl-card cal-card">
+                    <div class="pl-card-header" style="justify-content:space-between;">
+                        <button class="cal-nav-btn" onclick="calShiftMonth(-1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+                        <div id="calMonthLabel" class="pl-card-title" style="font-size:0.88rem;"></div>
+                        <button class="cal-nav-btn" onclick="calShiftMonth(1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                    <div class="pl-card-body" style="padding:1rem;">
+                        <div class="cal-weekdays">
+                            <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+                        </div>
+                        <div class="cal-grid" id="calGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Panel derecho: detalle del día seleccionado -->
+                <div class="pl-card cal-detail-card" id="calDetail">
+                    <div class="pl-card-header">
+                        <div class="pl-card-icon">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        </div>
+                        <div class="pl-card-title" id="calDetailTitle">Selecciona un día</div>
+                    </div>
+                    <div class="pl-card-body" id="calDetailBody">
+                        <div style="color:var(--text-dim);font-size:0.85rem;text-align:center;padding:2rem 0;">
+                            Haz clic en un día del calendario para ver las tandas.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
 </div>
 
 <script>
@@ -349,21 +914,42 @@ const PL_ACCOUNT_ID = {{ session.circuit_id }};
 const PL_TODAY = '{{ today }}';
 const PL_MAX = {{ info.max_per_session if info else 12 }};
 
+function toggleKartEdit(id) {
+    const el = document.getElementById('kart-' + id);
+    el.classList.toggle('editing');
+}
+
 function showTab(name, btn) {
-    document.querySelectorAll('.pl-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pl-nav-item').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.pl-section').forEach(s => s.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + name).classList.add('active');
 }
+
 function toggleDay(wd, closed) {
     ['open_','close_'].forEach(p => {
-        const el = document.getElementById(p+wd);
-        if(el){ el.disabled=closed; el.style.opacity=closed?'0.3':'1'; }
+        const el = document.getElementById(p + wd);
+        if (el) { el.disabled = closed; el.style.opacity = closed ? '0.3' : '1'; }
     });
 }
+
+// Kart mix policy visual
+(function() {
+    const labels = document.querySelectorAll('.mix-label');
+    labels.forEach(lbl => {
+        lbl.querySelector('input[type=radio]').addEventListener('change', function() {
+            labels.forEach(l => {
+                const checked = l.querySelector('input[type=radio]').checked;
+                l.classList.toggle('checked', checked);
+            });
+        });
+    });
+})();
+
+// Deep-link tabs
 const hash = window.location.hash;
-if (hash === '#schedule') showTab('schedule', document.querySelectorAll('.pl-tab')[1]);
-else if (hash === '#bookings') showTab('bookings', document.querySelectorAll('.pl-tab')[2]);
+if (hash === '#schedule') showTab('schedule', document.querySelectorAll('.pl-nav-item')[1]);
+else if (hash === '#bookings') showTab('bookings', document.querySelectorAll('.pl-nav-item')[2]);
 
 // Booking form
 let plSlotsCache = [];
@@ -374,19 +960,13 @@ function plUpdateKartSelector(slot) {
     if (!kartSel) return;
     const sd = plSlotsCache.find(s => s.slot === slot);
     if (!sd) return;
-
     if (sd.kart_mix_policy === 'separate' && sd.locked_kart_group) {
         const lockedGroup = sd.locked_kart_group;
         const groupLabel = lockedGroup === 'B' ? 'Biplaza/Junior' : 'Adulto';
         Array.from(kartSel.options).forEach(opt => {
             const optGroup = opt.dataset.group;
-            if (optGroup && optGroup !== lockedGroup) {
-                opt.disabled = true;
-                opt.style.color = '#555';
-            } else {
-                opt.disabled = false;
-                opt.style.color = '';
-            }
+            if (optGroup && optGroup !== lockedGroup) { opt.disabled = true; opt.style.color = '#555'; }
+            else { opt.disabled = false; opt.style.color = ''; }
         });
         if (kartSel.selectedOptions[0] && kartSel.selectedOptions[0].disabled) {
             const valid = Array.from(kartSel.options).find(o => !o.disabled);
@@ -416,7 +996,7 @@ function plLoadSlots() {
             slotSel.innerHTML = slots.map(s => {
                 const label = s.full ? `${s.slot} — COMPLETA` : `${s.slot} (${s.available} plazas libres)`;
                 const color = s.full ? '#FF2D55' : s.available <= 3 ? '#FFD700' : '';
-                return `<option value="${s.slot}" ${s.slot===prevVal?'selected':''} style="color:${color};">${label}</option>`;
+                return `<option value="${s.slot}" ${s.slot === prevVal ? 'selected' : ''} style="color:${color};">${label}</option>`;
             }).join('');
             plCheckCapacity();
         });
@@ -433,9 +1013,131 @@ function plCheckCapacity() {
     plUpdateKartSelector(slot);
 }
 
+// ── Calendar ──────────────────────────────────────────────
+const CAL_DATA = {{ calendar_data | safe }};
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let calYear, calMonth, calSelected = null;
+
+function calInit() {
+    const t = new Date();
+    calYear = t.getFullYear();
+    calMonth = t.getMonth();
+    calRender();
+}
+
+function calShiftMonth(delta) {
+    calMonth += delta;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    calRender();
+}
+
+function calRender() {
+    document.getElementById('calMonthLabel').textContent =
+        MONTH_NAMES[calMonth] + ' ' + calYear;
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    // First day of month (Mon=0 … Sun=6)
+    const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    let cells = [];
+
+    // Leading days from previous month
+    for (let i = firstDow - 1; i >= 0; i--) {
+        cells.push({ day: daysInPrev - i, thisMonth: false });
+    }
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+        cells.push({ day: d, thisMonth: true });
+    }
+    // Trailing days
+    const trailing = 42 - cells.length;
+    for (let d = 1; d <= trailing; d++) {
+        cells.push({ day: d, thisMonth: false });
+    }
+
+    cells.forEach(({ day, thisMonth }) => {
+        const div = document.createElement('div');
+        div.className = 'cal-day' + (thisMonth ? '' : ' other-month');
+
+        let dateStr = null;
+        if (thisMonth) {
+            const mm = String(calMonth + 1).padStart(2, '0');
+            const dd = String(day).padStart(2, '0');
+            dateStr = `${calYear}-${mm}-${dd}`;
+
+            const hasBookings = CAL_DATA[dateStr] && CAL_DATA[dateStr].length > 0;
+            if (hasBookings) div.classList.add('has-bookings');
+            if (dateStr === todayStr) div.classList.add('today');
+            if (dateStr === calSelected) div.classList.add('selected');
+
+            div.innerHTML = day + '<span class="cal-dot"></span>';
+            div.onclick = () => calSelectDay(dateStr);
+        } else {
+            div.classList.add('empty');
+            div.textContent = day;
+        }
+
+        grid.appendChild(div);
+    });
+}
+
+function calSelectDay(dateStr) {
+    calSelected = dateStr;
+    calRender();
+
+    const parts = dateStr.split('-');
+    const label = parseInt(parts[2]) + ' de ' + MONTH_NAMES[parseInt(parts[1]) - 1] + ' ' + parts[0];
+    document.getElementById('calDetailTitle').textContent = label;
+
+    const body = document.getElementById('calDetailBody');
+    const slots = CAL_DATA[dateStr];
+
+    if (!slots || slots.length === 0) {
+        body.innerHTML = '<div class="cal-empty-day">Sin tandas ocupadas este día.</div>';
+        return;
+    }
+
+    // Group by slot, accumulate pilots
+    const bySlot = {};
+    slots.forEach(s => {
+        if (!bySlot[s.slot]) bySlot[s.slot] = { pilots: 0, entries: [] };
+        bySlot[s.slot].pilots += s.pilots;
+        bySlot[s.slot].entries.push(s);
+    });
+
+    let html = '';
+    Object.keys(bySlot).sort().forEach(slot => {
+        const g = bySlot[slot];
+        g.entries.forEach(e => {
+            const srcBadge = e.source === 'pilot'
+                ? '<span class="src-badge src-pilot">Piloto</span>'
+                : '<span class="src-badge src-manual">Manual</span>';
+            const kart = e.kart ? `<span style="margin-left:0.35rem;color:var(--text-dim);">· ${e.kart}</span>` : '';
+            html += `
+            <div class="cal-slot">
+                <div class="cal-slot-time">${slot}</div>
+                <div class="cal-slot-info">
+                    <div class="cal-slot-contact">${e.contact || '—'}</div>
+                    <div class="cal-slot-meta">${srcBadge}${kart}</div>
+                </div>
+                <div class="cal-slot-pilots">${e.pilots}<span>pilot${e.pilots !== 1 ? 's' : ''}</span></div>
+            </div>`;
+        });
+    });
+    body.innerHTML = html;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pl_date').value = PL_TODAY;
     plLoadSlots();
+    calInit();
 });
 </script>
 {% endblock %}
