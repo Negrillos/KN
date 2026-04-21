@@ -142,15 +142,18 @@
 /* ── Cards ───────────────────────────────────────────────── */
 .pl-card {
     background: var(--bg2);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,77,0,0.18);
     border-radius: 14px;
     overflow: hidden;
     margin-bottom: 1.5rem;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.45);
-    transition: box-shadow 0.2s;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,0,0.06), 0 4px 32px rgba(255,77,0,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-.pl-card:hover { box-shadow: 0 4px 30px rgba(0,0,0,0.6); }
+.pl-card:hover {
+    border-color: rgba(255,77,0,0.35);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,77,0,0.1), 0 6px 40px rgba(255,77,0,0.15);
+}
 
 .pl-card-header {
     display: flex;
@@ -254,11 +257,16 @@
 /* ── Manual booking form ─────────────────────────────────── */
 .form-card {
     background: var(--bg2);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,77,0,0.18);
     border-radius: 14px;
     overflow: hidden;
     margin-bottom: 1.5rem;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.45);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,0,0.06), 0 4px 32px rgba(255,77,0,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.form-card:hover {
+    border-color: rgba(255,77,0,0.35);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,77,0,0.1), 0 6px 40px rgba(255,77,0,0.15);
 }
 .form-card-top { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
 .form-card-body { padding: 1.75rem; }
