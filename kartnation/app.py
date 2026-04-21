@@ -1993,11 +1993,28 @@ def pitlane_dashboard():
         if circuit_row and circuit_row['kart_mix_policy']:
             kart_mix_policy = circuit_row['kart_mix_policy']
     kart_types = [dict(k) for k in kart_types_raw]
+
+    # Build calendar data: { "YYYY-MM-DD": [ {slot, pilots, source, contact, kart}, ... ] }
+    from collections import defaultdict
+    _cal = defaultdict(list)
+    for b in all_bookings:
+        _cal[b['booking_date']].append({
+            'slot': b['time_slot'],
+            'pilots': b.get('num_pilots', 1) or 1,
+            'source': b.get('source', 'manual'),
+            'contact': b.get('contact_name') or '',
+            'kart': b.get('kart_name') or '',
+        })
+    for k in _cal:
+        _cal[k].sort(key=lambda x: x['slot'])
+    import json as _json
+    calendar_data = _json.dumps(dict(_cal))
+
     conn.close()
     return render_template('pitlane_dashboard.html',
         info=info, schedule=schedule, bookings=all_bookings, kart_types=kart_types,
         overrides=overrides, weekday_names=WEEKDAY_NAMES, today=today,
-        kart_mix_policy=kart_mix_policy)
+        kart_mix_policy=kart_mix_policy, calendar_data=calendar_data)
 
 @app.route('/pitlane/info', methods=['POST'])
 @pitlane_required
