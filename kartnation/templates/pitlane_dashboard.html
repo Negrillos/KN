@@ -435,20 +435,38 @@
 .cal-dot { display: none; }
 .cal-day.empty { cursor: default; pointer-events: none; }
 
-/* Slot items inside detail panel */
-.cal-slot {
+/* Search bar */
+.cal-search-wrap { padding: 0.75rem 1rem 0; }
+.cal-search {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.83rem;
+    padding: 0.5rem 0.75rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+.cal-search:focus { border-color: var(--accent); }
+.cal-search::placeholder { color: var(--text-dim); }
+
+/* Tanda group */
+.cal-tanda { margin-bottom: 0.6rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.cal-tanda-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    border-radius: 10px;
     background: var(--bg3);
-    border: 1px solid var(--border);
-    margin-bottom: 0.5rem;
-    transition: border-color 0.15s;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.15s;
+    user-select: none;
 }
-.cal-slot:hover { border-color: rgba(255,77,0,0.3); }
-.cal-slot-time {
+.cal-tanda-header:hover { background: rgba(255,255,255,0.05); }
+.cal-tanda-time {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.4rem;
     letter-spacing: 0.05em;
@@ -456,19 +474,58 @@
     min-width: 56px;
     line-height: 1;
 }
-.cal-slot-info { flex: 1; min-width: 0; }
-.cal-slot-contact { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal-slot-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem; }
-.cal-slot-pilots {
+.cal-tanda-info { flex: 1; min-width: 0; }
+.cal-tanda-label { font-weight: 600; font-size: 0.82rem; color: var(--text); }
+.cal-tanda-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem; }
+.cal-tanda-pilots {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.3rem;
     color: var(--text);
     display: flex;
     align-items: center;
     gap: 0.2rem;
+    margin-right: 0.25rem;
 }
-.cal-slot-pilots span { font-family: 'Barlow', sans-serif; font-size: 0.7rem; color: var(--text-dim); font-weight: 500; }
+.cal-tanda-pilots span { font-family: 'Barlow', sans-serif; font-size: 0.7rem; color: var(--text-dim); font-weight: 500; }
+.cal-tanda-chevron {
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.cal-tanda.open .cal-tanda-chevron { transform: rotate(180deg); }
+
+/* Booking entries inside tanda */
+.cal-tanda-body { display: none; background: var(--bg2); }
+.cal-tanda.open .cal-tanda-body { display: block; }
+.cal-booking-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1rem 0.55rem 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+}
+.cal-booking-entry:hover { background: rgba(255,255,255,0.03); }
+.cal-booking-name { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-booking-dni { font-size: 0.72rem; color: var(--text-dim); min-width: 70px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; }
+.cal-booking-meta { font-size: 0.72rem; color: var(--text-muted); }
+.cal-del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    padding: 0.2rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.cal-del-btn:hover { color: #ff4d4d; background: rgba(255,77,77,0.1); }
+
 .cal-empty-day { text-align: center; padding: 2.5rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
+.cal-no-results { text-align: center; padding: 1.5rem 1rem; color: var(--text-dim); font-size: 0.82rem; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media(max-width: 768px) {
@@ -897,6 +954,9 @@
                         </div>
                         <div class="pl-card-title" id="calDetailTitle">Selecciona un día</div>
                     </div>
+                    <div class="cal-search-wrap" id="calSearchWrap" style="display:none;">
+                        <input type="text" class="cal-search" id="calSearch" placeholder="Buscar por nombre o DNI…" oninput="calFilterDay(this.value)">
+                    </div>
                     <div class="pl-card-body" id="calDetailBody">
                         <div style="color:var(--text-dim);font-size:0.85rem;text-align:center;padding:2rem 0;">
                             Haz clic en un día del calendario para ver las tandas.
@@ -1088,6 +1148,8 @@ function calRender() {
     });
 }
 
+let calCurrentDaySlots = [];
+
 function calSelectDay(dateStr) {
     calSelected = dateStr;
     calRender();
@@ -1096,42 +1158,135 @@ function calSelectDay(dateStr) {
     const label = parseInt(parts[2]) + ' de ' + MONTH_NAMES[parseInt(parts[1]) - 1] + ' ' + parts[0];
     document.getElementById('calDetailTitle').textContent = label;
 
+    calCurrentDaySlots = CAL_DATA[dateStr] || [];
+
+    const searchWrap = document.getElementById('calSearchWrap');
+    const searchInput = document.getElementById('calSearch');
+    if (calCurrentDaySlots.length > 0) {
+        searchWrap.style.display = '';
+        searchInput.value = '';
+    } else {
+        searchWrap.style.display = 'none';
+    }
+
+    calRenderDay('');
+}
+
+function calFilterDay(query) {
+    calRenderDay(query);
+}
+
+function calRenderDay(query) {
     const body = document.getElementById('calDetailBody');
-    const slots = CAL_DATA[dateStr];
+    const slots = calCurrentDaySlots;
 
     if (!slots || slots.length === 0) {
         body.innerHTML = '<div class="cal-empty-day">Sin tandas ocupadas este día.</div>';
         return;
     }
 
-    // Group by slot, accumulate pilots
+    const q = query.trim().toLowerCase();
+
+    // Group by slot
     const bySlot = {};
     slots.forEach(s => {
-        if (!bySlot[s.slot]) bySlot[s.slot] = { pilots: 0, entries: [] };
-        bySlot[s.slot].pilots += s.pilots;
+        if (!bySlot[s.slot]) bySlot[s.slot] = { totalPilots: 0, entries: [] };
+        bySlot[s.slot].totalPilots += s.pilots;
         bySlot[s.slot].entries.push(s);
     });
 
     let html = '';
+    let visibleTandas = 0;
+
     Object.keys(bySlot).sort().forEach(slot => {
         const g = bySlot[slot];
-        g.entries.forEach(e => {
+
+        // Filter entries by query
+        const filteredEntries = q
+            ? g.entries.filter(e =>
+                (e.contact && e.contact.toLowerCase().includes(q)) ||
+                (e.dni && e.dni.toLowerCase().includes(q))
+              )
+            : g.entries;
+
+        if (filteredEntries.length === 0) return;
+        visibleTandas++;
+
+        const bookingCount = filteredEntries.length;
+        const pilotCount = filteredEntries.reduce((acc, e) => acc + e.pilots, 0);
+        const sources = [...new Set(filteredEntries.map(e => e.source))];
+        const sourceLabel = sources.map(s => s === 'pilot' ? 'Piloto' : 'Manual').join(' / ');
+
+        let entriesHtml = filteredEntries.map(e => {
             const srcBadge = e.source === 'pilot'
                 ? '<span class="src-badge src-pilot">Piloto</span>'
                 : '<span class="src-badge src-manual">Manual</span>';
-            const kart = e.kart ? `<span style="margin-left:0.35rem;color:var(--text-dim);">· ${e.kart}</span>` : '';
-            html += `
-            <div class="cal-slot">
-                <div class="cal-slot-time">${slot}</div>
-                <div class="cal-slot-info">
-                    <div class="cal-slot-contact">${e.contact || '—'}</div>
-                    <div class="cal-slot-meta">${srcBadge}${kart}</div>
-                </div>
-                <div class="cal-slot-pilots">${e.pilots}<span>pilot${e.pilots !== 1 ? 's' : ''}</span></div>
+            const kart = e.kart ? `<span class="cal-booking-meta">· ${e.kart}</span>` : '';
+            const dni = e.dni ? `<span class="cal-booking-dni">${e.dni}</span>` : `<span class="cal-booking-dni" style="opacity:0.3;">—</span>`;
+            return `
+            <div class="cal-booking-entry" data-id="${e.id}" data-source="${e.source}">
+                <div class="cal-booking-name">${e.contact || '—'}</div>
+                ${dni}
+                ${srcBadge}
+                ${kart}
+                <button class="cal-del-btn" onclick="calDeleteBooking(${e.id},'${e.source}',this)" title="Eliminar reserva">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
             </div>`;
-        });
+        }).join('');
+
+        html += `
+        <div class="cal-tanda" id="tanda-${slot.replace(':','')}">
+            <div class="cal-tanda-header" onclick="calToggleTanda(this)">
+                <div class="cal-tanda-time">${slot}</div>
+                <div class="cal-tanda-info">
+                    <div class="cal-tanda-label">${bookingCount} reserva${bookingCount !== 1 ? 's' : ''}</div>
+                    <div class="cal-tanda-sub">${sourceLabel}</div>
+                </div>
+                <div class="cal-tanda-pilots">${pilotCount}<span>pilot${pilotCount !== 1 ? 's' : ''}</span></div>
+                <svg class="cal-tanda-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="cal-tanda-body">${entriesHtml}</div>
+        </div>`;
     });
+
+    if (visibleTandas === 0) {
+        body.innerHTML = '<div class="cal-no-results">Sin resultados para esa búsqueda.</div>';
+        return;
+    }
+
     body.innerHTML = html;
+
+    // Auto-open tanda if searching
+    if (q) {
+        body.querySelectorAll('.cal-tanda').forEach(t => t.classList.add('open'));
+    }
+}
+
+function calToggleTanda(header) {
+    header.closest('.cal-tanda').classList.toggle('open');
+}
+
+function calDeleteBooking(id, source, btn) {
+    if (!confirm('¿Eliminar esta reserva?')) return;
+    btn.disabled = true;
+    fetch(`/pitlane/booking/delete-ajax/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.ok) { alert(data.error || 'Error al eliminar.'); btn.disabled = false; return; }
+        // Remove from in-memory data and re-render
+        calCurrentDaySlots = calCurrentDaySlots.filter(e => e.id !== id);
+        const q = document.getElementById('calSearch') ? document.getElementById('calSearch').value : '';
+        // Update CAL_DATA too so dot indicators stay correct
+        if (calSelected) CAL_DATA[calSelected] = calCurrentDaySlots;
+        calRender();
+        calRenderDay(q);
+    })
+    .catch(() => { alert('Error de conexión.'); btn.disabled = false; });
 }
 
 window.addEventListener('DOMContentLoaded', () => {

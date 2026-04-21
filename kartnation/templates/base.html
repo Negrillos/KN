@@ -332,6 +332,7 @@
         <a href="{{ url_for('index') }}" class="logo">KART<span>NATION</span> 🏁</a>
         <div class="nav-links">
             <a href="{{ url_for('circuitos') }}">Circuitos</a>
+            <a href="{{ url_for('soporte') }}">Soporte</a>
             {% if session.get('user_id') %}
                 {% if session.get('is_admin') %}
                 <a href="{{ url_for('admin_panel') }}" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,215,0,0.1);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.4rem 0.9rem;border-radius:var(--radius);text-decoration:none;">⚙️ Admin</a>

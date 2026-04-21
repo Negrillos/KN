@@ -2,328 +2,879 @@
 {% block title %}Panel Admin — KARTNATION{% endblock %}
 {% block head %}
 <style>
-    .admin-hero {
-        padding: 2.5rem 0 2rem;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-    .admin-hero::before {
-        content: '';
-        position: absolute;
-        top: -100px; right: -100px;
-        width: 400px; height: 400px;
-        background: radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .admin-badge {
-        display: inline-flex; align-items: center; gap: 0.5rem;
-        background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
-        border-radius: 4px; padding: 0.3rem 0.8rem;
-        font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
-        font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
-        color: var(--accent2); margin-bottom: 0.75rem;
-    }
-    .admin-title {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: clamp(2.5rem, 5vw, 4rem);
-        letter-spacing: 0.02em; line-height: 1;
-    }
-    .admin-title span { color: var(--accent2); }
+/* ── Layout ───────────────────────────────────────────────── */
+.pl-wrap { display: flex; min-height: calc(100vh - 60px); }
 
-    /* STATS */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem; margin-bottom: 2.5rem;
-    }
-    .stat-card {
-        background: var(--bg2); border: 1px solid var(--border);
-        border-radius: var(--radius-lg); padding: 1.25rem;
-        position: relative; overflow: hidden;
-    }
-    .stat-card::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    }
-    .stat-card.orange::before { background: var(--accent); }
-    .stat-card.gold::before { background: var(--accent2); }
-    .stat-card.blue::before { background: var(--accent3); }
-    .stat-card.green::before { background: var(--green); }
-    .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; line-height: 1; }
-    .stat-card.orange .stat-val { color: var(--accent); }
-    .stat-card.gold .stat-val { color: var(--accent2); }
-    .stat-card.blue .stat-val { color: var(--accent3); }
-    .stat-card.green .stat-val { color: var(--green); }
-    .stat-lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem; }
+/* ── Sidebar ──────────────────────────────────────────────── */
+.pl-sidebar {
+    width: 248px; min-width: 248px;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 60px;
+    height: calc(100vh - 60px); overflow-y: auto;
+}
+.pl-sidebar-header { padding: 1.5rem 1.25rem 1.25rem; border-bottom: 1px solid var(--border); }
+.pl-sidebar-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.25);
+    border-radius: 4px; padding: 0.15rem 0.55rem; display: inline-block; margin-bottom: 0.55rem;
+}
+.pl-sidebar-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.45rem; letter-spacing: 0.03em; line-height: 1.1; }
+.pl-sidebar-name span { color: var(--accent2); }
+.pl-sidebar-user { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.25rem; }
+.pl-nav { flex: 1; padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.pl-nav-item {
+    display: flex; align-items: center; gap: 0.8rem; padding: 0.72rem 1rem;
+    border-radius: 11px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem;
+    font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left; transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.pl-nav-item:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text); }
+.pl-nav-item.active { background: var(--accent2); color: #000; box-shadow: 0 4px 18px rgba(255,215,0,0.3); }
+.pl-nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pl-nav-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.pl-sidebar-footer { padding: 1rem 0.75rem 1.25rem; border-top: 1px solid var(--border); }
 
-    /* SECTION */
-    .section-title {
-        font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.03em;
-        margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;
-    }
-    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+/* ── Main content ─────────────────────────────────────────── */
+.pl-main { flex: 1; padding: 2rem 2.5rem; min-width: 0; }
+.pl-page-header { margin-bottom: 1.75rem; }
+.pl-page-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; letter-spacing: 0.04em; line-height: 1; }
+.pl-page-title span { color: var(--accent2); }
+.pl-section { display: none; }
+.pl-section.active { display: block; }
 
-    /* TABLE */
-    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 2.5rem; }
-    .data-table th {
-        font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
-        font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-        color: var(--text-dim); padding: 0.6rem 1rem;
-        border-bottom: 1px solid var(--border); text-align: left;
-    }
-    .data-table td {
-        padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
-        font-size: 0.875rem; vertical-align: middle;
-    }
-    .data-table tr:hover td { background: var(--card-hover); }
-    .data-table tr:last-child td { border-bottom: none; }
+/* ── Cards ────────────────────────────────────────────────── */
+.pl-card {
+    background: var(--bg2); border: 1px solid rgba(255,215,0,0.15); border-radius: 14px;
+    overflow: hidden; margin-bottom: 1.5rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,215,0,0.05), 0 4px 32px rgba(255,215,0,0.06);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.pl-card:hover { border-color: rgba(255,215,0,0.3); box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 6px 40px rgba(255,215,0,0.1); }
+.pl-card-header { display: flex; align-items: center; gap: 0.65rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+.pl-card-icon {
+    width: 30px; height: 30px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pl-card-icon svg { width: 15px; height: 15px; fill: none; stroke: var(--accent2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pl-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+.pl-card-body { padding: 1.5rem; }
 
-    .user-cell { display: flex; align-items: center; gap: 0.75rem; }
-    .mini-avatar {
-        width: 32px; height: 32px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
-        background: rgba(255,77,0,0.15); color: var(--accent);
-        border: 1px solid rgba(255,77,0,0.3); flex-shrink: 0;
-    }
-    .admin-mini-avatar { background: rgba(255,215,0,0.15); color: var(--accent2); border-color: rgba(255,215,0,0.3); }
-    .user-name { font-weight: 600; font-size: 0.9rem; }
-    .user-email { font-size: 0.75rem; color: var(--text-muted); }
+/* ── Stats grid ───────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.25rem; position: relative; overflow: hidden;
+}
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.stat-card.orange::before { background: var(--accent); }
+.stat-card.gold::before   { background: var(--accent2); }
+.stat-card.blue::before   { background: var(--accent3); }
+.stat-card.green::before  { background: var(--green); }
+.stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; line-height: 1; }
+.stat-card.orange .stat-val { color: var(--accent); }
+.stat-card.gold .stat-val   { color: var(--accent2); }
+.stat-card.blue .stat-val   { color: var(--accent3); }
+.stat-card.green .stat-val  { color: var(--green); }
+.stat-lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem; }
 
-    .level-select {
-        background: var(--bg3); border: 1px solid var(--border);
-        color: var(--text); font-size: 0.8rem; padding: 0.3rem 0.6rem;
-        border-radius: var(--radius); cursor: pointer;
-    }
+/* ── Tables ───────────────────────────────────────────────── */
+.bk-table { width: 100%; border-collapse: collapse; }
+.bk-table th {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left;
+}
+.bk-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
+.bk-table tr:last-child td { border-bottom: none; }
+.bk-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.time-badge { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; }
 
-    .table-wrapper { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.user-cell { display: flex; align-items: center; gap: 0.75rem; }
+.mini-avatar {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
+    background: rgba(255,77,0,0.15); color: var(--accent); border: 1px solid rgba(255,77,0,0.3); flex-shrink: 0;
+}
+.admin-mini-avatar { background: rgba(255,215,0,0.15); color: var(--accent2); border-color: rgba(255,215,0,0.3); }
+.user-name { font-weight: 600; font-size: 0.9rem; }
+.user-sub { font-size: 0.73rem; color: var(--text-muted); }
 
-    .booking-row-circuit {
-        display: flex; align-items: center; gap: 0.5rem;
-    }
-    .circuit-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.level-select {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.8rem; padding: 0.3rem 0.6rem;
+    border-radius: 6px; cursor: pointer;
+}
+
+/* ── Status badge ─────────────────────────────────────────── */
+.status-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px;
+}
+.status-next     { color: var(--green); background: rgba(124,255,0,0.1); }
+.status-done     { color: var(--text-dim); background: rgba(255,255,255,0.04); }
+
+/* ── Circuit dot ──────────────────────────────────────────── */
+.circ-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Circuit account card ─────────────────────────────────── */
+.acc-item {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.85rem 1rem; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    margin-bottom: 0.5rem; transition: border-color 0.15s;
+}
+.acc-item:hover { border-color: rgba(255,215,0,0.3); }
+.acc-avatar {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--accent2);
+}
+.acc-name { font-weight: 600; font-size: 0.9rem; }
+.acc-sub  { font-size: 0.73rem; color: var(--text-muted); }
+.acc-link-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px;
+    background: rgba(0,196,255,0.1); color: var(--accent3);
+}
+.acc-nolink { font-size: 0.72rem; color: var(--text-dim); }
+
+/* ── Manual booking form ──────────────────────────────────── */
+.form-section-title {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.73rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent2);
+    margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+.form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+#adm_slotInfo {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.75rem 1rem; margin-top: 0.5rem; font-size: 0.82rem;
+    color: var(--text-muted); display: none;
+}
+
+/* ── Kart badge ───────────────────────────────────────────── */
+.kart-badge {
+    font-size: 0.75rem; background: rgba(255,77,0,0.12); color: var(--accent);
+    border: 1px solid rgba(255,77,0,0.3); padding: 0.2rem 0.5rem; border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* ── Ticket items ─────────────────────────────────────────── */
+.ticket-item {
+    border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg3); margin-bottom: 0.6rem; overflow: hidden;
+    transition: border-color 0.15s;
+}
+.ticket-item:hover { border-color: rgba(255,255,255,0.12); }
+.ticket-item.status-por_atender { border-left: 3px solid var(--red); }
+.ticket-item.status-en_progreso { border-left: 3px solid var(--accent2); }
+.ticket-item.status-cerrado     { border-left: 3px solid var(--green); }
+.ticket-header {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.85rem 1rem; cursor: pointer; user-select: none;
+}
+.ticket-header:hover { background: rgba(255,255,255,0.03); }
+.ticket-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ticket-subject { font-weight: 600; font-size: 0.88rem; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticket-meta    { font-size: 0.73rem; color: var(--text-muted); white-space: nowrap; }
+.ticket-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 4px; white-space: nowrap;
+}
+.tbadge-por_atender { background: rgba(255,45,85,0.15);  color: var(--red); }
+.tbadge-en_progreso { background: rgba(255,215,0,0.15);  color: var(--accent2); }
+.tbadge-cerrado     { background: rgba(124,255,0,0.12);  color: var(--green); }
+.type-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 4px; white-space: nowrap;
+}
+.type-soporte    { background: rgba(0,196,255,0.12); color: var(--accent3); }
+.type-solicitud  { background: rgba(255,77,0,0.12);  color: var(--accent); }
+.notif-filter-bar { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.notif-filter {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.4rem 0.9rem; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--text-muted);
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.notif-filter:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.notif-filter.active { background: var(--accent2); color: #000; border-color: var(--accent2); }
+.ticket-cat {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 4px;
+    background: rgba(255,255,255,0.06); color: var(--text-muted);
+}
+.ticket-chevron { color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.ticket-item.open .ticket-chevron { transform: rotate(180deg); }
+.ticket-body { display: none; padding: 1rem 1rem 1rem 2rem; border-top: 1px solid var(--border); background: var(--bg2); }
+.ticket-item.open .ticket-body { display: block; }
+.ticket-message {
+    font-size: 0.85rem; color: var(--text-muted); white-space: pre-wrap;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.85rem 1rem; margin-bottom: 1rem; line-height: 1.6;
+}
+.ticket-admin-note { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.2); color: var(--text); }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media(max-width: 900px) {
+    .pl-wrap { flex-direction: column; }
+    .pl-sidebar { width: 100%; min-width: unset; height: auto; position: relative; top: 0; }
+    .pl-nav { flex-direction: row; flex-wrap: wrap; padding: 0.75rem; }
+    .pl-nav-item { width: auto; flex: 1; min-width: 100px; justify-content: center; }
+    .pl-main { padding: 1.25rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- HERO -->
-    <section class="admin-hero">
-        <div class="admin-badge">⚙️ Panel de administración</div>
-        <h1 class="admin-title">PANEL <span>ADMIN</span></h1>
-        <p style="color:var(--text-muted);margin-top:0.5rem;">Gestiona usuarios, reservas y niveles de la plataforma KARTNATION.</p>
-    </section>
+<div class="pl-wrap">
 
-    <!-- STATS -->
-    <div class="stats-row">
-        <div class="stat-card orange">
-            <div class="stat-val">{{ total_users }}</div>
-            <div class="stat-lbl">Pilotos registrados</div>
+    <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+    <aside class="pl-sidebar">
+        <div class="pl-sidebar-header">
+            <div class="pl-sidebar-badge">⚙ Admin</div>
+            <div class="pl-sidebar-name">PANEL <span>ADMIN</span></div>
+            <div class="pl-sidebar-user">{{ session.username }}</div>
         </div>
-        <div class="stat-card gold">
-            <div class="stat-val">{{ total_bookings }}</div>
-            <div class="stat-lbl">Reservas totales</div>
-        </div>
-        <div class="stat-card blue">
-            <div class="stat-val">{{ upcoming_bookings }}</div>
-            <div class="stat-lbl">Reservas próximas</div>
-        </div>
-        <div class="stat-card green">
-            <div class="stat-val">{{ users|length }}</div>
-            <div class="stat-lbl">Cuentas activas</div>
-        </div>
-    </div>
 
-    <!-- USERS TABLE -->
-    <h2 class="section-title">Usuarios registrados</h2>
-    <div class="table-wrapper" style="margin-bottom:2.5rem;overflow-x:auto;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Piloto</th>
-                    <th>Email</th>
-                    <th>DNI</th>
-                    <th>Teléfono</th>
-                    <th>Nivel</th>
-                    <th>Tandas</th>
-                    <th>Registrado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>
-                        <div class="user-cell">
-                            <div class="mini-avatar {% if u.is_admin %}admin-mini-avatar{% endif %}">
-                                {{ u.avatar_initial or u.username[0].upper() }}
-                            </div>
-                            <div>
-                                <div class="user-name">
-                                    {{ u.full_name }}
-                                    {% if u.is_admin %}
-                                    <span style="font-size:0.65rem;background:rgba(255,215,0,0.15);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.1rem 0.4rem;border-radius:2px;vertical-align:middle;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.1em;">ADMIN</span>
-                                    {% endif %}
+        <nav class="pl-nav">
+            <button class="pl-nav-item active" onclick="showTab('inicio',this)">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                Inicio
+            </button>
+            <button class="pl-nav-item" onclick="showTab('pilotos',this)">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>
+                Pilotos
+            </button>
+            <button class="pl-nav-item" onclick="showTab('reservas',this)">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                Reservas
+            </button>
+            <button class="pl-nav-item" onclick="showTab('circuitos',this)">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></span>
+                Circuitos
+            </button>
+            <button class="pl-nav-item" onclick="showTab('notificaciones',this)" style="position:relative;">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                Notificaciones
+                {% if open_tickets > 0 %}
+                <span style="position:absolute;top:6px;right:8px;background:var(--red);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:700;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;line-height:1;">{{ open_tickets }}</span>
+                {% endif %}
+            </button>
+        </nav>
+
+        <div class="pl-sidebar-footer">
+            <a href="{{ url_for('index') }}" class="pl-nav-item" style="text-decoration:none;">
+                <span class="pl-nav-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
+                Salir al sitio
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── MAIN ───────────────────────────────────────────── -->
+    <main class="pl-main">
+
+        <!-- ── TAB: INICIO ───────────────────────────────── -->
+        <div class="pl-section active" id="tab-inicio">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Panel <span>Admin</span></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card orange">
+                    <div class="stat-val">{{ total_users }}</div>
+                    <div class="stat-lbl">Pilotos registrados</div>
+                </div>
+                <div class="stat-card gold">
+                    <div class="stat-val">{{ total_bookings }}</div>
+                    <div class="stat-lbl">Reservas totales</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-val">{{ upcoming_bookings }}</div>
+                    <div class="stat-lbl">Reservas próximas</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-val">{{ total_circuits }}</div>
+                    <div class="stat-lbl">Circuitos activos</div>
+                </div>
+            </div>
+
+            <!-- Últimas reservas online -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="pl-card-title">Últimas reservas online</div>
+                </div>
+                <div class="pl-card-body" style="padding:0;">
+                    <div style="overflow-x:auto;">
+                    <table class="bk-table">
+                        <thead><tr>
+                            <th>Piloto</th><th>Circuito</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acción</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for b in recent_bookings %}
+                        <tr>
+                            <td>
+                                <div class="user-name">{{ b.full_name }}</div>
+                                <div class="user-sub">@{{ b.username }}</div>
+                            </td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <div class="circ-dot" style="background:{{ b.color }};"></div>
+                                    {{ b.circuit_name }}
                                 </div>
-                                <div class="user-email">@{{ u.username }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td style="color:var(--text-muted);">{{ u.email }}</td>
-                    <td style="font-size:0.82rem;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;">
-                        {% if u.dni and u.dni != '00000000A' %}
-                            <span style="color:var(--text);">{{ u.dni }}</span>
-                        {% else %}
-                            <span style="color:var(--accent2);">⚠️ Pendiente</span>
+                            </td>
+                            <td style="color:var(--text-muted);">{{ b.booking_date }}</td>
+                            <td><span class="time-badge">{{ b.time_slot }}</span></td>
+                            <td>
+                                {% if b.booking_date >= today %}
+                                <span class="status-badge status-next">Próxima</span>
+                                {% else %}
+                                <span class="status-badge status-done">Completada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.booking_date >= today %}
+                                <form method="POST" action="{{ url_for('admin_remove_from_slot', booking_id=b.id) }}"
+                                      onsubmit="return confirm('¿Eliminar a {{ b.full_name }} de esta tanda?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                                {% else %}
+                                <span style="color:var(--text-dim);font-size:0.78rem;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_bookings %}
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas aún</td></tr>
                         {% endif %}
-                    </td>
-                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ u.teléfono or '—' }}</td>
-                    <td>
-                        {% if not u.is_admin %}
-                        {% set li = level_fn(u.karting_level) %}
-                        <form method="POST" action="{{ url_for('admin_update_level', user_id=u.id) }}" style="display:inline;">
-                            <select name="level" class="level-select" onchange="this.form.submit()" style="color:{{ li.color }};">
-                                {% for lvl in ['Novato','Intermedio','Avanzado','Experto'] %}
-                                <option value="{{ lvl }}" {% if lvl == u.karting_level %}selected{% endif %}>{{ lvl }}</option>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: PILOTOS ──────────────────────────────── -->
+        <div class="pl-section" id="tab-pilotos">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Gestión de <span>Pilotos</span></div>
+            </div>
+
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    </div>
+                    <div class="pl-card-title">Usuarios registrados ({{ users|length }})</div>
+                </div>
+                <div class="pl-card-body" style="padding:0;">
+                    <div style="overflow-x:auto;">
+                    <table class="bk-table">
+                        <thead><tr>
+                            <th>Piloto</th><th>Email</th><th>DNI</th><th>Teléfono</th><th>Tandas</th><th>Registrado</th><th>Acciones</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="mini-avatar {% if u.is_admin %}admin-mini-avatar{% endif %}">
+                                        {{ u.avatar_initial or u.username[0].upper() }}
+                                    </div>
+                                    <div>
+                                        <div class="user-name">
+                                            {{ u.full_name }}
+                                            {% if u.is_admin %}
+                                            <span style="font-size:0.62rem;background:rgba(255,215,0,0.15);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.1rem 0.4rem;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.1em;vertical-align:middle;">ADMIN</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="user-sub">@{{ u.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="color:var(--text-muted);font-size:0.83rem;">{{ u.email }}</td>
+                            <td style="font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;letter-spacing:0.05em;">
+                                {% if u.dni and u.dni not in ('00000000A','') %}
+                                    {{ u.dni }}
+                                {% else %}
+                                    <span style="color:var(--accent2);font-size:0.75rem;">⚠ Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:var(--text-muted);font-size:0.82rem;">{{ u.teléfono or '—' }}</td>
+                            <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);">{{ u.total_bookings }}</td>
+                            <td style="color:var(--text-muted);font-size:0.8rem;">{{ u.created_at[:10] }}</td>
+                            <td>
+                                {% if not u.is_admin %}
+                                <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}"
+                                      onsubmit="return confirm('¿Eliminar a {{ u.full_name }}? Esta acción no se puede deshacer.')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                                {% else %}
+                                <span style="color:var(--text-dim);font-size:0.78rem;">Protegido</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: RESERVAS ─────────────────────────────── -->
+        <div class="pl-section" id="tab-reservas">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Gestión de <span>Reservas</span></div>
+            </div>
+
+            <!-- Formulario reserva manual -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <div class="pl-card-title">Nueva reserva manual</div>
+                </div>
+                <div class="pl-card-body">
+                    <form method="POST" action="{{ url_for('admin_manual_booking') }}" id="admBookingForm">
+                        <div class="form-section-title">1. Circuito y horario</div>
+                        <div class="form-group">
+                            <label>Circuito</label>
+                            <select id="adm_circuit" name="circuit_id" required onchange="admLoadKartTypes(this.value)">
+                                {% for c in circuits %}
+                                <option value="{{ c.id }}">{{ c.emoji }} {{ c.name }} — {{ c.location }} (max. {{ c.max_per_session }} pilotos)</option>
                                 {% endfor %}
                             </select>
-                        </form>
-                        {% else %}
-                        <span style="color:var(--text-dim);font-size:0.8rem;">—</span>
-                        {% endif %}
-                    </td>
-                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);">{{ u.total_bookings }}</td>
-                    <td style="color:var(--text-muted);font-size:0.8rem;">{{ u.created_at[:10] }}</td>
-                    <td>
-                        {% if not u.is_admin %}
-                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}"
-                              onsubmit="return confirm('¿Eliminar a {{ u.full_name }}? Esta acción no se puede deshacer.')">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
-                        {% else %}
-                        <span style="color:var(--text-dim);font-size:0.78rem;">Protegido</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- MANUAL BOOKING CTA -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-        <h2 class="section-title" style="margin-bottom:0;flex:1;">Reservas manuales (teléfono/presencial)</h2>
-        <a href="{{ url_for('admin_manual_booking') }}" class="btn btn-primary" style="margin-left:1.5rem;white-space:nowrap;">
-            + Añadir reserva manual
-        </a>
-    </div>
-    <div class="table-wrapper" style="overflow-x:auto;margin-bottom:2.5rem;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Contacto</th>
-                    <th>Circuito</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Pilotos</th>
-                    <th>Kart</th>
-                    <th>Teléfono</th>
-                    <th>Email</th>
-                    <th>Notas</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mb in manual_bookings %}
-                <tr>
-                    <td style="font-weight:600;">{{ mb.contact_name }}</td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <div style="width:8px;height:8px;border-radius:50%;background:{{ mb.color }};flex-shrink:0;"></div>
-                            {{ mb.circuit_name }}
                         </div>
-                    </td>
-                    <td style="color:var(--text-muted);">{{ mb.booking_date }}</td>
-                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.05em;">{{ mb.time_slot }}</td>
-                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--accent);">{{ mb.num_pilots }}</td>
-                    <td>
-                        {% if mb.kart_name %}
-                        <span style="font-size:0.78rem;background:rgba(255,77,0,0.12);color:var(--accent);border:1px solid rgba(255,77,0,0.3);padding:0.2rem 0.5rem;border-radius:2px;">
-                            🏎 {{ mb.kart_name }}
-                        </span>
-                        {% else %}—{% endif %}
-                    </td>
-                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ mb.contact_phone or '—' }}</td>
-                    <td style="color:var(--text-muted);font-size:0.82rem;">{{ mb.contact_email or '—' }}</td>
-                    <td style="color:var(--text-muted);font-size:0.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ mb.notes }}">{{ mb.notes or '—' }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('admin_delete_manual', booking_id=mb.id) }}"
-                              onsubmit="return confirm('Eliminar esta reserva manual?')">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not manual_bookings %}
-                <tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas manuales</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
-    <h2 class="section-title">Últimas reservas online</h2>
-    <div class="table-wrapper" style="overflow-x:auto;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Piloto</th>
-                    <th>Circuito</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for b in recent_bookings %}
-                <tr>
-                    <td>
-                        <div style="font-weight:600;">{{ b.full_name }}</div>
-                        <div style="font-size:0.75rem;color:var(--text-muted);">@{{ b.username }}</div>
-                    </td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <div style="width:8px;height:8px;border-radius:50%;background:{{ b.color }};"></div>
-                            {{ b.circuit_name }}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha</label>
+                                <input type="date" id="adm_date" name="booking_date" min="{{ today }}" required onchange="admLoadSlots()">
+                            </div>
+                            <div class="form-group">
+                                <label>Hora de la tanda</label>
+                                <select id="adm_slot" name="time_slot" required onchange="admCheckCapacity()">
+                                    <option value="">— Selecciona primero circuito y fecha —</option>
+                                </select>
+                            </div>
                         </div>
-                    </td>
-                    <td style="color:var(--text-muted);">{{ b.booking_date }}</td>
-                    <td style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.05em;">{{ b.time_slot }}</td>
-                    <td>
-                        {% if b.booking_date >= today %}
-                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);background:rgba(124,255,0,0.1);padding:0.2rem 0.5rem;border-radius:2px;">Próxima</span>
-                        {% else %}
-                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);background:rgba(255,255,255,0.03);padding:0.2rem 0.5rem;border-radius:2px;">Completada</span>
+                        <div id="adm_slotInfo"></div>
+                        <div class="form-row" style="margin-top:1rem;">
+                            <div class="form-group">
+                                <label>Tipo de kart</label>
+                                <select id="adm_kart" name="kart_type_id" required>
+                                    {% for kt in kart_types %}
+                                    <option value="{{ kt.id }}">{{ kt.name }}{% if kt.engine_cc %} ({{ kt.engine_cc }}cc){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="adm_kartLockMsg" style="display:none;margin-top:0.4rem;font-size:0.78rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;">
+                                    Esta tanda ya tiene tipo de kart asignado.
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de pilotos</label>
+                                <input type="number" id="adm_pilots" name="num_pilots" value="1" min="1" max="999" required onchange="admCheckCapacity()">
+                            </div>
+                        </div>
+
+                        <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
+                        <div class="form-section-title">2. Datos de contacto</div>
+
+                        <div class="form-group">
+                            <label>Nombre del contacto <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="contact_name" placeholder="Nombre completo del piloto o responsable" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" name="contact_phone" placeholder="+34 600 000 000">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="contact_email" placeholder="piloto@email.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas adicionales</label>
+                            <textarea name="notes" rows="2" placeholder="Observaciones, forma de pago..." style="resize:vertical;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Confirmar reserva manual</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla reservas manuales -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <div class="pl-card-title">Reservas manuales ({{ manual_bookings|length }})</div>
+                </div>
+                <div class="pl-card-body" style="padding:0;">
+                    <div style="overflow-x:auto;">
+                    <table class="bk-table">
+                        <thead><tr>
+                            <th>Contacto</th><th>Circuito</th><th>Fecha</th><th>Hora</th><th>Pilotos</th><th>Kart</th><th>Teléfono</th><th>Notas</th><th>Acción</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for mb in manual_bookings %}
+                        <tr>
+                            <td style="font-weight:600;">{{ mb.contact_name }}</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <div class="circ-dot" style="background:{{ mb.color }};"></div>
+                                    {{ mb.circuit_name }}
+                                </div>
+                            </td>
+                            <td style="color:var(--text-muted);">{{ mb.booking_date }}</td>
+                            <td><span class="time-badge">{{ mb.time_slot }}</span></td>
+                            <td style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--accent);">{{ mb.num_pilots }}</td>
+                            <td>
+                                {% if mb.kart_name %}<span class="kart-badge">🏎 {{ mb.kart_name }}</span>{% else %}—{% endif %}
+                            </td>
+                            <td style="color:var(--text-muted);font-size:0.82rem;">{{ mb.contact_phone or '—' }}</td>
+                            <td style="color:var(--text-muted);font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ mb.notes }}">{{ mb.notes or '—' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_delete_manual', booking_id=mb.id) }}"
+                                      onsubmit="return confirm('¿Eliminar esta reserva manual?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not manual_bookings %}
+                        <tr><td colspan="9" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas manuales</td></tr>
                         {% endif %}
-                    </td>
-                    <td>
-                        {% if b.booking_date >= today %}
-                        <form method="POST" action="{{ url_for('admin_remove_from_slot', booking_id=b.id) }}"
-                              onsubmit="return confirm('Eliminar a {{ b.full_name }} de esta tanda?')">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
-                        {% else %}
-                        <span style="color:var(--text-dim);font-size:0.78rem;">—</span>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla reservas online -->
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="pl-card-title">Reservas online ({{ recent_bookings|length }})</div>
+                </div>
+                <div class="pl-card-body" style="padding:0;">
+                    <div style="overflow-x:auto;">
+                    <table class="bk-table">
+                        <thead><tr>
+                            <th>Piloto</th><th>Circuito</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acción</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for b in recent_bookings %}
+                        <tr>
+                            <td>
+                                <div class="user-name">{{ b.full_name }}</div>
+                                <div class="user-sub">@{{ b.username }}</div>
+                            </td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <div class="circ-dot" style="background:{{ b.color }};"></div>
+                                    {{ b.circuit_name }}
+                                </div>
+                            </td>
+                            <td style="color:var(--text-muted);">{{ b.booking_date }}</td>
+                            <td><span class="time-badge">{{ b.time_slot }}</span></td>
+                            <td>
+                                {% if b.booking_date >= today %}
+                                <span class="status-badge status-next">Próxima</span>
+                                {% else %}
+                                <span class="status-badge status-done">Completada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.booking_date >= today %}
+                                <form method="POST" action="{{ url_for('admin_remove_from_slot', booking_id=b.id) }}"
+                                      onsubmit="return confirm('¿Eliminar a {{ b.full_name }} de esta tanda?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                                {% else %}
+                                <span style="color:var(--text-dim);font-size:0.78rem;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_bookings %}
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas aún</td></tr>
                         {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not recent_bookings %}
-                <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:2rem;">Sin reservas aún</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: CIRCUITOS ────────────────────────────── -->
+        <div class="pl-section" id="tab-circuitos">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Cuentas de <span>Circuitos</span></div>
+            </div>
+
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    </div>
+                    <div class="pl-card-title">Circuitos registrados ({{ circuit_accounts|length }})</div>
+                </div>
+                <div class="pl-card-body">
+                    {% for ca in circuit_accounts %}
+                    <div class="acc-item">
+                        <div class="acc-avatar">{{ ca.circuit_name[0].upper() }}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="acc-name">{{ ca.circuit_name }}</div>
+                            <div class="acc-sub">{{ ca.city }} · @{{ ca.username }}</div>
+                        </div>
+                        {% if ca.linked_name %}
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <div class="circ-dot" style="background:{{ ca.linked_color }};"></div>
+                            <span class="acc-link-badge">{{ ca.linked_name }}</span>
+                        </div>
+                        {% else %}
+                        <span class="acc-nolink">Sin circuito vinculado</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if not circuit_accounts %}
+                    <div style="text-align:center;color:var(--text-dim);padding:2rem;font-size:0.85rem;">Sin cuentas de circuito registradas.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: NOTIFICACIONES ───────────────────────── -->
+        <div class="pl-section" id="tab-notificaciones">
+            <div class="pl-page-header">
+                <div class="pl-page-title">Centro de <span>Notificaciones</span></div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="notif-filter-bar">
+                <button class="notif-filter active" onclick="filterNotif('all',this)">Todas ({{ tickets|length }})</button>
+                <button class="notif-filter" onclick="filterNotif('solicitud',this)">
+                    Solicitudes de registro ({{ tickets|selectattr('type','equalto','solicitud')|list|length }})
+                </button>
+                <button class="notif-filter" onclick="filterNotif('soporte',this)">
+                    Soporte ({{ tickets|selectattr('type','equalto','soporte')|list|length }})
+                </button>
+                <button class="notif-filter" onclick="filterNotif('por_atender',this)" style="margin-left:auto;">
+                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:4px;vertical-align:middle;"></span>
+                    Por atender ({{ open_tickets }})
+                </button>
+            </div>
+
+            <div class="pl-card">
+                <div class="pl-card-header">
+                    <div class="pl-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <div class="pl-card-title">
+                        Notificaciones recibidas
+                        {% if open_tickets > 0 %}
+                        <span style="margin-left:0.5rem;background:rgba(255,45,85,0.15);color:var(--red);font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:4px;">{{ open_tickets }} por atender</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="pl-card-body">
+                    {% if not tickets %}
+                    <div style="text-align:center;color:var(--text-dim);padding:2rem;font-size:0.85rem;">Sin notificaciones aún.</div>
+                    {% endif %}
+
+                    {% for t in tickets %}
+                    <div class="ticket-item status-{{ t.status }}"
+                         id="ticket-{{ t.id }}"
+                         data-type="{{ t.type or 'soporte' }}"
+                         data-status="{{ t.status }}">
+                        <div class="ticket-header" onclick="toggleTicket({{ t.id }})">
+                            <div class="ticket-status-dot" style="background:{% if t.status == 'por_atender' %}var(--red){% elif t.status == 'en_progreso' %}var(--accent2){% else %}var(--green){% endif %};"></div>
+                            <div class="ticket-subject" title="{{ t.subject }}">{{ t.subject }}</div>
+                            <span class="type-badge type-{{ t.type or 'soporte' }}">
+                                {% if t.type == 'solicitud' %}Solicitud{% else %}Soporte{% endif %}
+                            </span>
+                            <span class="ticket-cat">{{ t.category }}</span>
+                            <span class="ticket-badge tbadge-{{ t.status }}">
+                                {% if t.status == 'por_atender' %}Por atender
+                                {% elif t.status == 'en_progreso' %}En progreso
+                                {% else %}Cerrado{% endif %}
+                            </span>
+                            <div class="ticket-meta">
+                                {{ t.contact_name }}
+                                {% if t.username %} · @{{ t.username }}{% endif %}
+                                · {{ t.created_at[:10] }}
+                            </div>
+                            <svg class="ticket-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div class="ticket-body">
+                            <div style="display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:0.75rem;font-size:0.78rem;color:var(--text-muted);">
+                                <span><strong style="color:var(--text);">De:</strong> {{ t.contact_name }} ({{ t.contact_email }})</span>
+                                {% if t.username %}<span><strong style="color:var(--text);">Cuenta:</strong> @{{ t.username }}</span>{% endif %}
+                                <span><strong style="color:var(--text);">Enviado:</strong> {{ t.created_at[:16].replace('T',' ') }}</span>
+                            </div>
+                            <div class="ticket-message">{{ t.message }}</div>
+
+                            {% if t.admin_note %}
+                            <div style="margin-bottom:0.75rem;">
+                                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:0.35rem;">Nota interna</div>
+                                <div class="ticket-message ticket-admin-note">{{ t.admin_note }}</div>
+                            </div>
+                            {% endif %}
+
+                            <form method="POST" action="{{ url_for('admin_ticket_status', ticket_id=t.id) }}" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+                                <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
+                                    <label style="font-size:0.72rem;">Nota interna (opcional)</label>
+                                    <input type="text" name="admin_note" value="{{ t.admin_note or '' }}" placeholder="Observación para el equipo...">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label style="font-size:0.72rem;">Estado</label>
+                                    <select name="status" class="level-select">
+                                        <option value="por_atender" {% if t.status == 'por_atender' %}selected{% endif %}>Por atender</option>
+                                        <option value="en_progreso" {% if t.status == 'en_progreso' %}selected{% endif %}>En progreso</option>
+                                        <option value="cerrado"     {% if t.status == 'cerrado' %}selected{% endif %}>Cerrado</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+                            </form>
+
+                            <form method="POST" action="{{ url_for('admin_ticket_delete', ticket_id=t.id) }}"
+                                  onsubmit="return confirm('¿Eliminar esta notificación definitivamente?')"
+                                  style="margin-top:0.6rem;">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </main>
 </div>
+
+<script>
+function showTab(name, btn) {
+    document.querySelectorAll('.pl-nav-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pl-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+
+// Deep-link tabs via hash
+const _hash = window.location.hash;
+if (_hash === '#pilotos')        showTab('pilotos',   document.querySelectorAll('.pl-nav-item')[1]);
+else if (_hash === '#reservas')  showTab('reservas',  document.querySelectorAll('.pl-nav-item')[2]);
+else if (_hash === '#circuitos') showTab('circuitos', document.querySelectorAll('.pl-nav-item')[3]);
+else if (_hash === '#notificaciones') showTab('notificaciones', document.querySelectorAll('.pl-nav-item')[4]);
+
+function toggleTicket(id) {
+    document.getElementById('ticket-' + id).classList.toggle('open');
+}
+
+function filterNotif(filter, btn) {
+    document.querySelectorAll('.notif-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.ticket-item').forEach(el => {
+        if (filter === 'all') {
+            el.style.display = '';
+        } else if (filter === 'por_atender') {
+            el.style.display = el.dataset.status === 'por_atender' ? '' : 'none';
+        } else {
+            el.style.display = el.dataset.type === filter ? '' : 'none';
+        }
+    });
+}
+
+// ── Manual booking form ─────────────────────────────────────
+function admLoadKartTypes(circuitId) {
+    fetch(`/api/kart_types/${circuitId}`)
+        .then(r => r.json())
+        .then(karts => {
+            const sel = document.getElementById('adm_kart');
+            sel.innerHTML = karts.map(k =>
+                `<option value="${k.id}">${k.name}${k.engine_cc ? ' (' + k.engine_cc + 'cc)' : ''}</option>`
+            ).join('');
+        });
+    admLoadSlots();
+}
+
+function admLoadSlots() {
+    const circuitId = document.getElementById('adm_circuit').value;
+    const date = document.getElementById('adm_date').value;
+    const slotSel = document.getElementById('adm_slot');
+    const prev = slotSel.value;
+    if (!circuitId || !date) return;
+    fetch(`/api/circuit_slots?circuit_id=${circuitId}&date=${date}`)
+        .then(r => r.json())
+        .then(slots => {
+            if (!slots.length) {
+                slotSel.innerHTML = '<option value="">— Circuito cerrado este día —</option>';
+                return;
+            }
+            slotSel.innerHTML = slots.map(s => {
+                const lbl = s.full ? `${s.slot} — COMPLETA` : `${s.slot} (${s.available} plazas libres)`;
+                const col = s.full ? '#FF2D55' : s.available <= 3 ? '#FFD700' : '';
+                return `<option value="${s.slot}" ${s.slot === prev ? 'selected' : ''} style="color:${col};">${lbl}</option>`;
+            }).join('');
+            admCheckCapacity();
+        });
+}
+
+function admCheckCapacity() {
+    const circuitId = document.getElementById('adm_circuit').value;
+    const date = document.getElementById('adm_date').value;
+    const slot = document.getElementById('adm_slot').value;
+    const pilotsInput = document.getElementById('adm_pilots');
+    const kartSel = document.getElementById('adm_kart');
+    const lockMsg = document.getElementById('adm_kartLockMsg');
+    if (!date || !slot) return;
+    fetch(`/api/circuit_slots?circuit_id=${circuitId}&date=${date}`)
+        .then(r => r.json())
+        .then(allSlots => {
+            const sd = allSlots.find(s => s.slot === slot);
+            const opt = document.getElementById('adm_circuit').selectedOptions[0].text;
+            const maxMatch = opt.match(/max\. (\d+)/);
+            const max = maxMatch ? parseInt(maxMatch[1]) : 12;
+            const available = sd ? sd.available : max;
+            pilotsInput.max = available;
+            if (parseInt(pilotsInput.value) > available) pilotsInput.value = available > 0 ? available : 1;
+        });
+    fetch(`/api/slot_users?circuit_id=${circuitId}&date=${date}&slot=${slot}`)
+        .then(r => r.json())
+        .then(pilots => {
+            if (pilots.length > 0 && pilots[0].kart_name) {
+                const locked = pilots[0].kart_name;
+                for (let i = 0; i < kartSel.options.length; i++) {
+                    if (kartSel.options[i].text.includes(locked.split(' ')[0])) {
+                        kartSel.selectedIndex = i; break;
+                    }
+                }
+                kartSel.disabled = true;
+                lockMsg.style.display = 'block';
+            } else {
+                kartSel.disabled = false;
+                lockMsg.style.display = 'none';
+            }
+        });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const d = document.getElementById('adm_date');
+    if (d) { d.value = '{{ today }}'; admLoadSlots(); }
+});
+</script>
 {% endblock %}

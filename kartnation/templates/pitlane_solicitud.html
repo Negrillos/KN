@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% block title %}Solicitar acceso PitLane — KARTNATION{% endblock %}
+{% block head %}
+<style>
+.sol-wrapper {
+    min-height: calc(100vh - 60px);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 3rem 1rem 4rem; position: relative; overflow: hidden;
+}
+.sol-wrapper::before {
+    content: '';
+    position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(255,77,0,0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+.sol-container {
+    width: 100%; max-width: 960px;
+    display: grid; grid-template-columns: 320px 1fr;
+    gap: 2.5rem; position: relative; z-index: 1;
+    align-items: start;
+}
+@media(max-width: 780px) { .sol-container { grid-template-columns: 1fr; } }
+
+/* Brand side */
+.sol-brand { position: sticky; top: 80px; }
+.sol-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.sol-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--accent); }
+.sol-title { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 0.03em; line-height: 0.92; margin-bottom: 1rem; }
+.sol-title span { color: var(--accent); }
+.sol-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.5rem; }
+.sol-feature { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem; font-size: 0.82rem; color: var(--text-muted); }
+.sol-feature::before { content: '→'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.sol-back {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.75rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+    text-decoration: none; transition: color 0.15s;
+}
+.sol-back:hover { color: var(--text); }
+
+/* Form card */
+.sol-card {
+    background: var(--bg2); border: 1px solid rgba(255,77,0,0.2); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 4px 32px rgba(255,77,0,0.07);
+}
+.sol-card-bar { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.sol-card-body { padding: 2rem; }
+
+.form-section {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    margin: 1.5rem 0 1rem;
+}
+.form-section:first-child { margin-top: 0; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
+@media(max-width: 560px) { .form-row-2, .form-row-3 { grid-template-columns: 1fr; } }
+
+/* Phone prefix */
+.phone-wrap { display: flex; gap: 0; }
+.phone-wrap select {
+    border-radius: var(--radius) 0 0 var(--radius) !important;
+    border-right: none !important;
+    min-width: 0; width: auto; flex-shrink: 0;
+    font-size: 0.82rem;
+}
+.phone-wrap input {
+    border-radius: 0 var(--radius) var(--radius) 0 !important;
+    flex: 1; min-width: 0;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sol-wrapper">
+    <div class="sol-container">
+
+        <!-- Branding -->
+        <div class="sol-brand">
+            <div class="sol-eyebrow">PitLane · Circuitos</div>
+            <h1 class="sol-title">ÚNETE AL<br><span>PITLANE</span></h1>
+            <p class="sol-desc">Rellena el formulario y el equipo de KARTNATION revisará tu solicitud y se pondrá en contacto contigo.</p>
+            <div class="sol-feature">Gestión de reservas en tiempo real</div>
+            <div class="sol-feature">Calendario de tandas integrado</div>
+            <div class="sol-feature">Control de aforo y tipos de kart</div>
+            <div class="sol-feature">Reservas manuales y online unificadas</div>
+            <div class="sol-feature">Visibilidad ante miles de pilotos</div>
+            <a href="{{ url_for('pitlane') }}" class="sol-back">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                Ya tengo cuenta — Acceder
+            </a>
+        </div>
+
+        <!-- Form -->
+        <div class="sol-card">
+            <div class="sol-card-bar"></div>
+            <div class="sol-card-body">
+                <form method="POST" action="{{ url_for('pitlane_solicitud') }}" id="solForm">
+
+                    <!-- 1. Datos personales -->
+                    <div class="form-section">1. Datos personales</div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Nombre <span style="color:var(--accent);">*</span></label>
+                            <input type="text" name="first_name" required placeholder="Nombre">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellidos <span style="color:var(--accent);">*</span></label>
+                            <input type="text" name="last_name" required placeholder="Apellidos">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo electrónico <span style="color:var(--accent);">*</span></label>
+                        <input type="email" name="contact_email" required placeholder="contacto@micircuito.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono <span style="color:var(--accent);">*</span></label>
+                        <div class="phone-wrap">
+                            <select name="phone_prefix" id="phonePrefix">
+                                <option value="+34">🇪🇸 +34</option>
+                                <option value="+376">🇦🇩 +376</option>
+                                <option value="+54">🇦🇷 +54</option>
+                                <option value="+61">🇦🇺 +61</option>
+                                <option value="+43">🇦🇹 +43</option>
+                                <option value="+32">🇧🇪 +32</option>
+                                <option value="+55">🇧🇷 +55</option>
+                                <option value="+1">🇨🇦 +1</option>
+                                <option value="+56">🇨🇱 +56</option>
+                                <option value="+57">🇨🇴 +57</option>
+                                <option value="+506">🇨🇷 +506</option>
+                                <option value="+53">🇨🇺 +53</option>
+                                <option value="+45">🇩🇰 +45</option>
+                                <option value="+593">🇪🇨 +593</option>
+                                <option value="+20">🇪🇬 +20</option>
+                                <option value="+503">🇸🇻 +503</option>
+                                <option value="+358">🇫🇮 +358</option>
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+49">🇩🇪 +49</option>
+                                <option value="+30">🇬🇷 +30</option>
+                                <option value="+502">🇬🇹 +502</option>
+                                <option value="+504">🇭🇳 +504</option>
+                                <option value="+852">🇭🇰 +852</option>
+                                <option value="+36">🇭🇺 +36</option>
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+62">🇮🇩 +62</option>
+                                <option value="+353">🇮🇪 +353</option>
+                                <option value="+972">🇮🇱 +972</option>
+                                <option value="+39">🇮🇹 +39</option>
+                                <option value="+81">🇯🇵 +81</option>
+                                <option value="+52">🇲🇽 +52</option>
+                                <option value="+31">🇳🇱 +31</option>
+                                <option value="+64">🇳🇿 +64</option>
+                                <option value="+505">🇳🇮 +505</option>
+                                <option value="+47">🇳🇴 +47</option>
+                                <option value="+507">🇵🇦 +507</option>
+                                <option value="+595">🇵🇾 +595</option>
+                                <option value="+51">🇵🇪 +51</option>
+                                <option value="+63">🇵🇭 +63</option>
+                                <option value="+48">🇵🇱 +48</option>
+                                <option value="+351">🇵🇹 +351</option>
+                                <option value="+1787">🇵🇷 +1787</option>
+                                <option value="+40">🇷🇴 +40</option>
+                                <option value="+7">🇷🇺 +7</option>
+                                <option value="+966">🇸🇦 +966</option>
+                                <option value="+65">🇸🇬 +65</option>
+                                <option value="+27">🇿🇦 +27</option>
+                                <option value="+82">🇰🇷 +82</option>
+                                <option value="+46">🇸🇪 +46</option>
+                                <option value="+41">🇨🇭 +41</option>
+                                <option value="+886">🇹🇼 +886</option>
+                                <option value="+66">🇹🇭 +66</option>
+                                <option value="+90">🇹🇷 +90</option>
+                                <option value="+380">🇺🇦 +380</option>
+                                <option value="+971">🇦🇪 +971</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+598">🇺🇾 +598</option>
+                                <option value="+58">🇻🇪 +58</option>
+                            </select>
+                            <input type="tel" name="phone_number" required placeholder="600 000 000">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Rol / Posición en el negocio <span style="color:var(--accent);">*</span></label>
+                        <select name="role" required>
+                            <option value="">— Selecciona tu rol —</option>
+                            <option value="Propietario">Propietario / Socio</option>
+                            <option value="Director">Director / Gerente</option>
+                            <option value="Responsable de marketing">Responsable de marketing</option>
+                            <option value="Responsable de operaciones">Responsable de operaciones</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Datos del circuito -->
+                    <div class="form-section">2. Datos del circuito</div>
+                    <div class="form-group">
+                        <label>Nombre del circuito <span style="color:var(--accent);">*</span></label>
+                        <input type="text" name="circuit_name" required placeholder="Karting Barcelona...">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado del circuito <span style="color:var(--accent);">*</span></label>
+                        <select name="circuit_status" required>
+                            <option value="">— Selecciona el estado —</option>
+                            <option value="Ya en funcionamiento">Ya en funcionamiento</option>
+                            <option value="Próxima apertura">Próxima apertura</option>
+                        </select>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>País <span style="color:var(--accent);">*</span></label>
+                            <select name="country" required id="countrySelect" onchange="filterCities()">
+                                <option value="">— Selecciona un país —</option>
+                                <option value="España" selected>🇪🇸 España</option>
+                                <option value="Andorra">🇦🇩 Andorra</option>
+                                <option value="Argentina">🇦🇷 Argentina</option>
+                                <option value="Australia">🇦🇺 Australia</option>
+                                <option value="Austria">🇦🇹 Austria</option>
+                                <option value="Bélgica">🇧🇪 Bélgica</option>
+                                <option value="Brasil">🇧🇷 Brasil</option>
+                                <option value="Canada">🇨🇦 Canada</option>
+                                <option value="Chile">🇨🇱 Chile</option>
+                                <option value="Colombia">🇨🇴 Colombia</option>
+                                <option value="Dinamarca">🇩🇰 Dinamarca</option>
+                                <option value="Ecuador">🇪🇨 Ecuador</option>
+                                <option value="Finlandia">🇫🇮 Finlandia</option>
+                                <option value="Francia">🇫🇷 Francia</option>
+                                <option value="Alemania">🇩🇪 Alemania</option>
+                                <option value="Grecia">🇬🇷 Grecia</option>
+                                <option value="Países Bajos">🇳🇱 Países Bajos</option>
+                                <option value="Italia">🇮🇹 Italia</option>
+                                <option value="Japón">🇯🇵 Japón</option>
+                                <option value="México">🇲🇽 México</option>
+                                <option value="Noruega">🇳🇴 Noruega</option>
+                                <option value="Perú">🇵🇪 Perú</option>
+                                <option value="Polonia">🇵🇱 Polonia</option>
+                                <option value="Portugal">🇵🇹 Portugal</option>
+                                <option value="Reino Unido">🇬🇧 Reino Unido</option>
+                                <option value="Rumanía">🇷🇴 Rumanía</option>
+                                <option value="Rusia">🇷🇺 Rusia</option>
+                                <option value="Suecia">🇸🇪 Suecia</option>
+                                <option value="Suiza">🇨🇭 Suiza</option>
+                                <option value="Turquía">🇹🇷 Turquía</option>
+                                <option value="Estados Unidos">🇺🇸 Estados Unidos</option>
+                                <option value="Uruguay">🇺🇾 Uruguay</option>
+                                <option value="Venezuela">🇻🇪 Venezuela</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad / Municipio <span style="color:var(--accent);">*</span></label>
+                            <input type="text" name="city" required placeholder="Barcelona">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">
+                        Enviar solicitud de acceso →
+                    </button>
+                    <p style="font-size:0.73rem;color:var(--text-dim);margin-top:0.75rem;text-align:center;line-height:1.5;">
+                        Esta solicitud no da acceso inmediato al PitLane. El equipo de KARTNATION revisará tu solicitud y se pondrá en contacto contigo.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+{% endblock %}

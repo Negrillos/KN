@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Soporte — KARTNATION{% endblock %}
+{% block head %}
+<style>
+.sop-hero {
+    padding: 3rem 0 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+    position: relative; overflow: hidden;
+}
+.sop-hero::before {
+    content: '';
+    position: absolute; top: -80px; right: -80px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(0,196,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+.sop-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(0,196,255,0.1); border: 1px solid rgba(0,196,255,0.25);
+    border-radius: 4px; padding: 0.25rem 0.75rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent3); margin-bottom: 0.75rem;
+}
+.sop-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: 0.02em; line-height: 1;
+}
+.sop-title span { color: var(--accent3); }
+
+.sop-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2rem;
+    align-items: start;
+    max-width: 960px;
+}
+
+.sop-card {
+    background: var(--bg2);
+    border: 1px solid rgba(0,196,255,0.15);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 4px 32px rgba(0,196,255,0.05);
+}
+.sop-card-top { height: 3px; background: linear-gradient(90deg, var(--accent3), var(--accent)); }
+.sop-card-body { padding: 2rem; }
+
+.sop-section-title {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent3); margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-item {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.9rem 1rem; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    margin-bottom: 0.6rem;
+}
+.info-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(0,196,255,0.1); border: 1px solid rgba(0,196,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+}
+.info-icon svg { width: 15px; height: 15px; fill: none; stroke: var(--accent3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.info-label { font-size: 0.72rem; color: var(--text-dim); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; }
+.info-val { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-top: 0.1rem; }
+
+@media(max-width: 768px) {
+    .sop-layout { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="sop-hero">
+        <div class="sop-badge">Soporte</div>
+        <h1 class="sop-title">CENTRO DE <span>CONTACTO</span></h1>
+        <p style="color:var(--text-muted);margin-top:0.5rem;max-width:520px;">
+            ¿Necesitas ayuda o quieres hacer una solicitud? Envíanos una notificación y te responderemos lo antes posible.
+        </p>
+    </section>
+
+    <div class="sop-layout">
+        <!-- Formulario -->
+        <div class="sop-card">
+            <div class="sop-card-top"></div>
+            <div class="sop-card-body">
+                <form method="POST" action="{{ url_for('soporte') }}">
+
+                    <div class="sop-section-title">1. Tus datos</div>
+                    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>Nombre <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="contact_name" required
+                                   value="{{ user.full_name ~ ' ' ~ (user.apellido or '') if user else '' }}"
+                                   placeholder="Tu nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label>Email <span style="color:var(--red);">*</span></label>
+                            <input type="email" name="contact_email" required
+                                   value="{{ user.email if user else '' }}"
+                                   placeholder="tu@email.com">
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="type" value="soporte">
+
+                    <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
+                    <div class="sop-section-title">2. Tu problema</div>
+
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="category">
+                            <option value="reservas">Reservas</option>
+                            <option value="cuenta">Cuenta y perfil</option>
+                            <option value="pago">Pagos</option>
+                            <option value="tecnico">Problema técnico</option>
+                            <option value="otro" selected>Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Asunto <span style="color:var(--red);">*</span></label>
+                        <input type="text" name="subject" required placeholder="Describe brevemente el problema">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mensaje detallado <span style="color:var(--red);">*</span></label>
+                        <textarea name="message" rows="5" required style="resize:vertical;"
+                                  placeholder="Explícanos con detalle qué ocurrió, cuándo y qué pasos seguiste..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar notificación</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel lateral de info -->
+        <div>
+            <div class="sop-card" style="margin-bottom:1rem;">
+                <div class="sop-card-top"></div>
+                <div class="sop-card-body">
+                    <div class="sop-section-title">Información</div>
+                    <div class="info-item">
+                        <div class="info-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                        <div>
+                            <div class="info-label">Tiempo de respuesta</div>
+                            <div class="info-val">24 – 48 horas</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.09 5.18 2 2 0 015.07 3h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.09 10.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 17.92v-.99z"/></svg></div>
+                        <div>
+                            <div class="info-label">Atención</div>
+                            <div class="info-val">Lun – Vie, 9h – 18h</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+                        <div>
+                            <div class="info-label">Email de soporte</div>
+                            <div class="info-val">soporte@kartnation.es</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if user %}
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem;">Sesión activa</div>
+                <div style="font-weight:600;">{{ user.full_name }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);">@{{ user.username }} · {{ user.email }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

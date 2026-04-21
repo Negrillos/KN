@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3, hashlib, secrets, smtplib, os
+from werkzeug.security import generate_password_hash, check_password_hash as _wz_check
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, date, timedelta
@@ -195,6 +196,29 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        contact_name TEXT NOT NULL,
+        contact_email TEXT NOT NULL,
+        type TEXT DEFAULT 'soporte',
+        category TEXT DEFAULT 'otro',
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        status TEXT DEFAULT 'por_atender',
+        admin_note TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )''')
+    try:
+        c.execute("ALTER TABLE tickets ADD COLUMN type TEXT DEFAULT 'soporte'")
+    except: pass
+    # Migrate old status names
+    c.execute("UPDATE tickets SET status='por_atender' WHERE status='abierto'")
+    c.execute("UPDATE tickets SET status='en_progreso' WHERE status='en_revision'")
+    c.execute("UPDATE tickets SET status='cerrado' WHERE status='resuelto'")
 
     # Add google_id column for OAuth users
     try:
@@ -547,13 +571,44 @@ def init_db():
     conn.commit()
     conn.close()
 
-def hash_password(p): return hashlib.sha256(p.encode()).hexdigest()
+def hash_password(p):
+    return generate_password_hash(p)
 
-def generate_time_slots(circuit_name=None, weekday=None):
+def _is_legacy_hash(h):
+    return h and len(h) == 64 and all(c in '0123456789abcdef' for c in h)
+
+def verify_password(stored, plain):
+    if _is_legacy_hash(stored):
+        return hashlib.sha256(plain.encode()).hexdigest() == stored
+    return _wz_check(stored, plain)
+
+def _db_schedule_hours(account_id, weekday):
+    """Return [(oh, om, ch, cm), ...] from circuit_schedule for a pitlane account."""
+    conn = get_db()
+    row = conn.execute(
+        'SELECT * FROM circuit_schedule WHERE account_id=? AND weekday=?', (account_id, weekday)
+    ).fetchone()
+    conn.close()
+    if not row or row['is_closed'] or not row['open_time'] or not row['close_time']:
+        return []
+    try:
+        oh, om = map(int, row['open_time'].split(':'))
+        ch, cm = map(int, row['close_time'].split(':'))
+        return [(oh, om, ch, cm)]
+    except Exception:
+        return []
+
+def generate_time_slots(circuit_name=None, weekday=None, account_id=None):
     """Generate 15-min slots for a circuit on a given weekday.
-    If no circuit_name, returns full 08:00-18:00 range (fallback)."""
-    if circuit_name and weekday is not None and circuit_name in CIRCUIT_HOURS:
-        day_hours = CIRCUIT_HOURS[circuit_name].get(weekday, [])
+    Prefers DB schedule (account_id) over hardcoded CIRCUIT_HOURS.
+    If neither is available, returns full 08:00-23:45 range (fallback)."""
+    day_hours = []
+    if weekday is not None:
+        if account_id is not None:
+            day_hours = _db_schedule_hours(account_id, weekday)
+        elif circuit_name and circuit_name in CIRCUIT_HOURS:
+            day_hours = CIRCUIT_HOURS[circuit_name].get(weekday, [])
+    if day_hours:
         slots = []
         for (oh, om, ch, cm) in day_hours:
             cur = datetime.strptime(f'{oh:02d}:{om:02d}', '%H:%M')
@@ -603,14 +658,6 @@ def get_kart_group(kart_name):
         return 'B'
     return 'A'
 
-def get_karting_level_info(level):
-    levels = {
-        'Novato':     {'color':'#7CFF00','order':1,'icon':'🟢'},
-        'Intermedio': {'color':'#FFD700','order':2,'icon':'🟡'},
-        'Avanzado':   {'color':'#FF8C00','order':3,'icon':'🟠'},
-        'Experto':    {'color':'#FF2D55','order':4,'icon':'🔴'},
-    }
-    return levels.get(level, levels['Novato'])
 
 # ── OPENING HOURS (hora España = UTC+1 invierno / UTC+2 verano) ──
 # Formato: {dia_semana(0=lun..6=dom): [(open_h, open_m, close_h, close_m), ...]}
@@ -698,18 +745,20 @@ CIRCUIT_HOURS = {
     },
 }
 
-def is_circuit_open(circuit_name):
+def is_circuit_open(circuit_name, account_id=None):
     from datetime import timezone, timedelta as td
     spain_tz = timezone(td(hours=1))
     now = datetime.now(spain_tz)
     weekday = now.weekday()
-    hours = CIRCUIT_HOURS.get(circuit_name, {}).get(weekday, [])
+    if account_id is not None:
+        hours = _db_schedule_hours(account_id, weekday)
+    else:
+        hours = CIRCUIT_HOURS.get(circuit_name, {}).get(weekday, [])
     for (oh, om, ch, cm) in hours:
         open_dt = now.replace(hour=oh, minute=om, second=0, microsecond=0)
         close_dt = now.replace(hour=ch, minute=cm, second=0, microsecond=0)
         if open_dt <= now <= close_dt:
             return True, oh, om, ch, cm
-    # Find next opening
     return False, None, None, None, None
 
 def send_reset_email(to_email, to_name, reset_link):
@@ -829,17 +878,20 @@ def admin_login():
         password = request.form['password']
         conn = get_db()
         user = conn.execute(
-            'SELECT * FROM users WHERE username=? AND password_hash=? AND is_admin=1',
-            (username, hash_password(password))
+            'SELECT * FROM users WHERE username=? AND is_admin=1', (username,)
         ).fetchone()
-        conn.close()
-        if user:
+        if user and verify_password(user['password_hash'], password):
+            if _is_legacy_hash(user['password_hash']):
+                conn.execute('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password), user['id']))
+                conn.commit()
+            conn.close()
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['is_admin'] = True
             flash(f'Bienvenido al panel, {user["full_name"].split()[0]}.', 'success')
             return redirect(url_for('admin_panel'))
         else:
+            conn.close()
             flash('Credenciales incorrectas o cuenta sin permisos de administrador.', 'error')
     return render_template('admin_login.html')
 
@@ -881,15 +933,23 @@ def login():
         username = request.form['username'].strip()
         password = request.form['password']
         conn = get_db()
-        user = conn.execute('SELECT * FROM users WHERE username=? AND password_hash=?',(username,hash_password(password))).fetchone()
-        conn.close()
-        if user:
+        user = conn.execute('SELECT * FROM users WHERE username=?', (username,)).fetchone()
+        if user and verify_password(user['password_hash'], password):
+            if user['is_admin']:
+                conn.close()
+                flash('Las cuentas de administrador deben acceder desde el panel de administración.', 'error')
+                return render_template('login.html')
+            if _is_legacy_hash(user['password_hash']):
+                conn.execute('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password), user['id']))
+                conn.commit()
+            conn.close()
             session['user_id'] = user['id']
             session['username'] = user['username']
-            session['is_admin'] = bool(user['is_admin'])
+            session['is_admin'] = False
             flash(f'Bienvenido, {user["full_name"].split()[0]}!','success')
-            return redirect(url_for('admin_panel') if user['is_admin'] else url_for('index'))
+            return redirect(url_for('index'))
         else:
+            conn.close()
             flash('Usuario o contrasena incorrectos.','error')
     return render_template('login.html')
 
@@ -910,9 +970,8 @@ def profile():
         LEFT JOIN kart_types kt ON b.kart_type_id=kt.id
         WHERE b.user_id=? ORDER BY b.booking_date DESC, b.time_slot DESC''',(session['user_id'],)).fetchall()
     conn.close()
-    level_info = get_karting_level_info(user['karting_level'])
     today = date.today().isoformat()
-    return render_template('profile.html', user=user, bookings=bookings, level_info=level_info, today=today)
+    return render_template('profile.html', user=user, bookings=bookings, today=today)
 
 @app.route('/profile/edit', methods=['GET','POST'])
 @login_required
@@ -933,6 +992,15 @@ def profile_edit():
             flash('Nombre, apellido y teléfono son obligatorios.','error')
             conn.close()
             return render_template('profile_edit.html', user=user, now_date=date.today().isoformat())
+
+        if dni:
+            existing = conn.execute(
+                'SELECT id FROM users WHERE dni=? AND id!=?', (dni, session['user_id'])
+            ).fetchone()
+            if existing:
+                flash('No hemos podido completar el registro. Comprueba los datos introducidos o contacta con soporte.', 'error')
+                conn.close()
+                return render_template('profile_edit.html', user=user, now_date=date.today().isoformat())
 
         updates = {
             'full_name': full_name,
@@ -973,21 +1041,21 @@ def circuit_detail(circuit_id):
     if not circuit:
         flash('Circuito no encontrado.','error')
         return redirect(url_for('index'))
+    # Get linked pitlane account for this circuit (needed for schedule)
+    pitlane_acc = conn.execute('SELECT id FROM circuit_accounts WHERE linked_circuit_id=?',(circuit_id,)).fetchone()
+    pitlane_acc_id = pitlane_acc['id'] if pitlane_acc else None
     # Default date: next day the circuit is open
-    default_date = next_open_date(circuit['name'])
+    default_date = next_open_date(circuit['name'], account_id=pitlane_acc_id)
     selected_date = request.args.get('date', default_date)
     # Get weekday for selected date to generate correct slots
     try:
         sel_weekday = datetime.strptime(selected_date, '%Y-%m-%d').weekday()
     except:
         sel_weekday = datetime.today().weekday()
-    time_slots = generate_time_slots(circuit['name'], sel_weekday)
+    time_slots = generate_time_slots(circuit['name'], sel_weekday, account_id=pitlane_acc_id)
     # Fallback if closed that day
     if not time_slots:
         time_slots = generate_time_slots()
-    # Get linked pitlane account for this circuit
-    pitlane_acc = conn.execute('SELECT id FROM circuit_accounts WHERE linked_circuit_id=?',(circuit_id,)).fetchone()
-    pitlane_acc_id = pitlane_acc['id'] if pitlane_acc else None
 
     # All kart types come from unified kart_types table, keyed by circuit_id
     kart_types = [dict(k) for k in conn.execute('SELECT * FROM kart_types WHERE circuit_id=?',(circuit_id,)).fetchall()]
@@ -998,7 +1066,7 @@ def circuit_detail(circuit_id):
 
     slot_data = {}
     for slot in time_slots:
-        bookings = conn.execute('''SELECT u.username, u.full_name, u.karting_level, u.avatar_initial, u.races_completed,
+        bookings = conn.execute('''SELECT u.username, u.full_name, u.avatar_initial, u.races_completed,
             kt.name as kart_name
             FROM bookings b JOIN users u ON b.user_id=u.id
             LEFT JOIN kart_types kt ON b.kart_type_id=kt.id
@@ -1067,7 +1135,7 @@ def circuit_detail(circuit_id):
     conn.close()
     return render_template('circuit.html', circuit=circuit, slot_data=slot_data,
                            time_slots=time_slots, selected_date=selected_date, user=user,
-                           kart_types=kart_types, level_fn=get_karting_level_info,
+                           kart_types=kart_types,
                            now=datetime.now().strftime('%H:%M'), today=date.today().isoformat(),
                            default_date=default_date, pitlane_price=pitlane_price)
 
@@ -1078,6 +1146,14 @@ def api_complete_profile():
     fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
     if not dni and not fecha_nacimiento:
         return jsonify({'ok': False, 'error': 'No se proporcionaron datos.'})
+    conn = get_db()
+    if dni:
+        existing = conn.execute(
+            'SELECT id FROM users WHERE dni=? AND id!=?', (dni, session['user_id'])
+        ).fetchone()
+        if existing:
+            conn.close()
+            return jsonify({'ok': False, 'error': 'No hemos podido completar el registro. Comprueba los datos introducidos o contacta con soporte.'})
     updates = []
     values = []
     if dni:
@@ -1087,7 +1163,6 @@ def api_complete_profile():
         updates.append('fecha_nacimiento=?')
         values.append(fecha_nacimiento)
     values.append(session['user_id'])
-    conn = get_db()
     conn.execute(f'UPDATE users SET {", ".join(updates)} WHERE id=?', values)
     conn.commit()
     conn.close()
@@ -1312,7 +1387,7 @@ def api_slot_users():
     booking_date = request.args.get('date')
     time_slot = request.args.get('slot')
     conn = get_db()
-    bookings = conn.execute('''SELECT u.username, u.full_name, u.karting_level, u.avatar_initial, u.races_completed,
+    bookings = conn.execute('''SELECT u.username, u.full_name, u.avatar_initial, u.races_completed,
         kt.name as kart_name, kt.engine_cc
         FROM bookings b JOIN users u ON b.user_id=u.id
         LEFT JOIN kart_types kt ON b.kart_type_id=kt.id
@@ -1320,10 +1395,8 @@ def api_slot_users():
     conn.close()
     result = []
     for b in bookings:
-        info = get_karting_level_info(b['karting_level'])
-        result.append({'username':b['username'],'full_name':b['full_name'],'karting_level':b['karting_level'],
+        result.append({'username':b['username'],'full_name':b['full_name'],
             'avatar_initial':b['avatar_initial'],'races_completed':b['races_completed'],
-            'level_color':info['color'],'level_icon':info['icon'],
             'kart_name':b['kart_name'],'engine_cc':b['engine_cc']})
     return jsonify(result)
 
@@ -1402,11 +1475,29 @@ def admin_panel():
         FROM manual_bookings mb JOIN circuits c ON mb.circuit_id=c.id
         LEFT JOIN kart_types kt ON mb.kart_type_id=kt.id
         ORDER BY mb.created_at DESC LIMIT 30''').fetchall()
+    circuits = conn.execute('SELECT * FROM circuits ORDER BY name').fetchall()
+    circuit_accounts = conn.execute('''
+        SELECT ca.*, c.name as linked_name, c.location as linked_location, c.color as linked_color
+        FROM circuit_accounts ca
+        LEFT JOIN circuits c ON ca.linked_circuit_id = c.id
+        ORDER BY ca.circuit_name
+    ''').fetchall()
+    total_circuits = conn.execute('SELECT COUNT(*) as cnt FROM circuit_accounts').fetchone()['cnt']
+    kart_types_first = conn.execute('SELECT * FROM kart_types WHERE circuit_id=?', (circuits[0]['id'],)).fetchall() if circuits else []
+    tickets = conn.execute('''
+        SELECT t.*, u.username, u.full_name as user_full_name
+        FROM tickets t LEFT JOIN users u ON t.user_id = u.id
+        ORDER BY t.created_at DESC
+    ''').fetchall()
+    open_tickets = sum(1 for t in tickets if t['status'] == 'por_atender')
     conn.close()
     return render_template('admin.html', users=users, total_bookings=total_bookings,
         upcoming_bookings=upcoming_bookings, total_users=total_users,
         recent_bookings=recent_bookings, manual_bookings=manual_bookings,
-        level_fn=get_karting_level_info, today=today)
+        circuits=circuits, circuit_accounts=circuit_accounts,
+        total_circuits=total_circuits, kart_types=kart_types_first,
+        tickets=tickets, open_tickets=open_tickets,
+        today=today)
 
 @app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
 @admin_required
@@ -1420,23 +1511,10 @@ def admin_delete_user(user_id):
     conn.commit()
     conn.close()
     flash('Usuario eliminado.','success')
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_panel') + '#pilotos')
 
-@app.route('/admin/update_level/<int:user_id>', methods=['POST'])
-@admin_required
-def admin_update_level(user_id):
-    new_level = request.form['level']
-    if new_level not in ['Novato','Intermedio','Avanzado','Experto']:
-        flash('Nivel no valido.','error')
-        return redirect(url_for('admin_panel'))
-    conn = get_db()
-    conn.execute('UPDATE users SET karting_level=? WHERE id=?',(new_level,user_id))
-    conn.commit()
-    conn.close()
-    flash('Nivel actualizado.','success')
-    return redirect(url_for('admin_panel'))
 
-def next_open_date(circuit_name):
+def next_open_date(circuit_name, account_id=None):
     """Return the next date (including today) when the circuit is open."""
     from datetime import timezone, timedelta as td
     spain_tz = timezone(td(hours=1))
@@ -1444,10 +1522,12 @@ def next_open_date(circuit_name):
     for delta in range(0, 14):
         check = now + td(days=delta)
         weekday = check.weekday()
-        hours = CIRCUIT_HOURS.get(circuit_name, {}).get(weekday, [])
+        if account_id is not None:
+            hours = _db_schedule_hours(account_id, weekday)
+        else:
+            hours = CIRCUIT_HOURS.get(circuit_name, {}).get(weekday, [])
         if not hours:
             continue
-        # If it's today, check if there's still time left
         if delta == 0:
             for (oh, om, ch, cm) in hours:
                 close_dt = now.replace(hour=ch, minute=cm, second=0, microsecond=0)
@@ -1470,11 +1550,10 @@ def api_circuit_slots():
         weekday = datetime.strptime(booking_date, '%Y-%m-%d').weekday()
     except:
         weekday = datetime.today().weekday()
-    slots = generate_time_slots(circuit['name'], weekday) or generate_time_slots()
-
     # Get linked pitlane account_id if any
     pitlane_acc = conn.execute('SELECT id FROM circuit_accounts WHERE linked_circuit_id=?',(circuit_id,)).fetchone()
     pitlane_acc_id = pitlane_acc['id'] if pitlane_acc else None
+    slots = generate_time_slots(circuit['name'], weekday, account_id=pitlane_acc_id) or generate_time_slots()
 
     # Count occupancy per slot
     result = []
@@ -1510,10 +1589,13 @@ def api_circuit_slots():
 def api_circuits_status():
     conn = get_db()
     circuits = conn.execute('SELECT id, name FROM circuits').fetchall()
+    linked = {r['linked_circuit_id']: r['id'] for r in conn.execute(
+        'SELECT id, linked_circuit_id FROM circuit_accounts WHERE linked_circuit_id IS NOT NULL'
+    ).fetchall()}
     conn.close()
     result = {}
     for c in circuits:
-        open_now, oh, om, ch, cm = is_circuit_open(c['name'])
+        open_now, oh, om, ch, cm = is_circuit_open(c['name'], account_id=linked.get(c['id']))
         if open_now:
             result[c['id']] = {
                 'open': True,
@@ -1536,6 +1618,9 @@ def api_circuit_availability():
 
     conn = get_db()
     circuits = conn.execute('SELECT * FROM circuits').fetchall()
+    linked = {r['linked_circuit_id']: r['id'] for r in conn.execute(
+        'SELECT id, linked_circuit_id FROM circuit_accounts WHERE linked_circuit_id IS NOT NULL'
+    ).fetchall()}
     result = {}
     for c in circuits:
         # Count slots in time range that still have space
@@ -1543,7 +1628,7 @@ def api_circuit_availability():
             sel_weekday = datetime.strptime(filter_date, '%Y-%m-%d').weekday()
         except:
             sel_weekday = datetime.today().weekday()
-        slots = generate_time_slots(c['name'], sel_weekday) or generate_time_slots()
+        slots = generate_time_slots(c['name'], sel_weekday, account_id=linked.get(c['id'])) or generate_time_slots()
         available_slots = 0
         for slot in slots:
             if slot < time_from or slot > time_to:
@@ -1575,7 +1660,7 @@ def admin_remove_from_slot(booking_id):
     else:
         flash('Reserva no encontrada.','error')
     conn.close()
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_panel') + '#reservas')
 
 @app.route('/admin/manual_booking', methods=['GET','POST'])
 @admin_required
@@ -1656,7 +1741,7 @@ def admin_manual_booking():
         conn.commit()
         conn.close()
         flash(f'Reserva manual de {num_pilots} piloto{"s" if num_pilots>1 else ""} añadida correctamente para el {booking_date} a las {time_slot}.','success')
-        return redirect(url_for('admin_panel'))
+        return redirect(url_for('admin_panel') + '#reservas')
 
     # GET — load kart types for first circuit
     kart_types = conn.execute('SELECT * FROM kart_types WHERE circuit_id=?',(circuits[0]['id'],)).fetchall() if circuits else []
@@ -1678,7 +1763,107 @@ def admin_delete_manual(booking_id):
     conn.commit()
     conn.close()
     flash('Reserva manual eliminada.','info')
-    return redirect(url_for('admin_panel'))
+    return redirect(url_for('admin_panel') + '#reservas')
+
+# ── TICKETS ──
+
+@app.route('/soporte', methods=['GET', 'POST'])
+def soporte():
+    conn = get_db()
+    user = None
+    if 'user_id' in session:
+        user = conn.execute('SELECT * FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    if request.method == 'POST':
+        contact_name  = request.form.get('contact_name', '').strip()
+        contact_email = request.form.get('contact_email', '').strip()
+        category      = request.form.get('category', 'otro')
+        subject       = request.form.get('subject', '').strip()
+        message       = request.form.get('message', '').strip()
+        if not contact_name or not contact_email or not subject or not message:
+            flash('Por favor rellena todos los campos obligatorios.', 'error')
+            conn.close()
+            return render_template('soporte.html', user=user)
+        user_id = session.get('user_id')
+        conn.execute(
+            'INSERT INTO tickets (user_id, contact_name, contact_email, type, category, subject, message) VALUES (?,?,?,?,?,?,?)',
+            (user_id, contact_name, contact_email, request.form.get('type', 'soporte'), category, subject, message)
+        )
+        conn.commit()
+        conn.close()
+        flash('Tu notificación ha sido enviada. El equipo de soporte te responderá lo antes posible.', 'success')
+        return redirect(url_for('soporte'))
+    conn.close()
+    return render_template('soporte.html', user=user)
+
+@app.route('/pitlane/solicitud', methods=['GET', 'POST'])
+def pitlane_solicitud():
+    if request.method == 'POST':
+        first_name     = request.form.get('first_name', '').strip()
+        last_name      = request.form.get('last_name', '').strip()
+        contact_name   = f"{first_name} {last_name}".strip()
+        contact_email  = request.form.get('contact_email', '').strip()
+        phone_prefix   = request.form.get('phone_prefix', '').strip()
+        phone_number   = request.form.get('phone_number', '').strip()
+        contact_phone  = f"{phone_prefix} {phone_number}".strip()
+        role           = request.form.get('role', '').strip()
+        circuit_name   = request.form.get('circuit_name', '').strip()
+        circuit_status = request.form.get('circuit_status', '').strip()
+        country        = request.form.get('country', '').strip()
+        city           = request.form.get('city', '').strip()
+        description    = request.form.get('description', '').strip()
+        if not circuit_name or not city or not first_name or not contact_email:
+            flash('Por favor rellena todos los campos obligatorios.', 'error')
+            return render_template('pitlane_solicitud.html')
+        subject = f'Solicitud de registro: {circuit_name} ({city})'
+        message = (
+            f'Circuito: {circuit_name}\n'
+            f'Estado: {circuit_status or "—"}\n'
+            f'País: {country or "—"}\n'
+            f'Ciudad: {city}\n'
+            f'Contacto: {contact_name}\n'
+            f'Rol: {role or "—"}\n'
+            f'Email: {contact_email}\n'
+            f'Teléfono: {contact_phone or "—"}\n\n'
+            f'Descripción:\n{description or "—"}'
+        )
+        conn = get_db()
+        conn.execute(
+            'INSERT INTO tickets (user_id, contact_name, contact_email, type, category, subject, message) VALUES (?,?,?,?,?,?,?)',
+            (None, contact_name, contact_email, 'solicitud', 'registro', subject, message)
+        )
+        conn.commit()
+        conn.close()
+        flash('Tu solicitud ha sido enviada. El equipo de KARTNATION la revisará y se pondrá en contacto contigo.', 'success')
+        return redirect(url_for('pitlane_solicitud'))
+    return render_template('pitlane_solicitud.html')
+
+@app.route('/admin/tickets/<int:ticket_id>/status', methods=['POST'])
+@admin_required
+def admin_ticket_status(ticket_id):
+    new_status  = request.form.get('status', 'por_atender')
+    admin_note  = request.form.get('admin_note', '').strip()
+    if new_status not in ('por_atender', 'en_progreso', 'cerrado'):
+        flash('Estado no válido.', 'error')
+        return redirect(url_for('admin_panel') + '#notificaciones')
+    conn = get_db()
+    conn.execute(
+        "UPDATE tickets SET status=?, admin_note=?, updated_at=datetime('now') WHERE id=?",
+        (new_status, admin_note, ticket_id)
+    )
+    conn.commit()
+    conn.close()
+    flash('Notificación actualizada.', 'success')
+    return redirect(url_for('admin_panel') + '#notificaciones')
+
+@app.route('/admin/tickets/<int:ticket_id>/delete', methods=['POST'])
+@admin_required
+def admin_ticket_delete(ticket_id):
+    conn = get_db()
+    conn.execute('DELETE FROM tickets WHERE id=?', (ticket_id,))
+    conn.commit()
+    conn.close()
+    flash('Notificación eliminada.', 'info')
+    return redirect(url_for('admin_panel') + '#notificaciones')
 
 # ── PITLANE ROUTES ──
 
@@ -1704,17 +1889,20 @@ def pitlane():
             password = request.form['password']
             conn = get_db()
             acc = conn.execute(
-                'SELECT * FROM circuit_accounts WHERE username=? AND password_hash=?',
-                (username, hash_password(password))
+                'SELECT * FROM circuit_accounts WHERE username=?', (username,)
             ).fetchone()
-            conn.close()
-            if acc:
+            if acc and verify_password(acc['password_hash'], password):
+                if _is_legacy_hash(acc['password_hash']):
+                    conn.execute('UPDATE circuit_accounts SET password_hash=? WHERE id=?', (hash_password(password), acc['id']))
+                    conn.commit()
+                conn.close()
                 session['circuit_id'] = acc['id']
                 session['circuit_name'] = acc['circuit_name']
                 session['circuit_username'] = acc['username']
                 flash(f'Bienvenido, {acc["circuit_name"]}.', 'success')
                 return redirect(url_for('pitlane_dashboard'))
             else:
+                conn.close()
                 flash('Usuario o contraseña incorrectos.', 'error')
 
         elif action == 'register':
@@ -1965,6 +2153,7 @@ def pitlane_dashboard():
             SELECT b.id, b.booking_date, b.time_slot, b.created_at,
                    u.full_name as contact_name, u.email as contact_email,
                    u."teléfono" as contact_phone,
+                   u.dni as contact_dni,
                    kt.name as kart_name
             FROM bookings b
             JOIN users u ON b.user_id = u.id
@@ -1979,7 +2168,7 @@ def pitlane_dashboard():
 
     # Combined and sorted
     all_bookings = sorted(manual_list + online_bookings,
-        key=lambda x: (x['booking_date'], x['time_slot']), reverse=True)
+        key=lambda x: x.get('created_at') or '', reverse=True)
 
     overrides = conn.execute(
         'SELECT * FROM circuit_schedule_override WHERE account_id=? AND override_date >= ? ORDER BY override_date',
@@ -1994,16 +2183,18 @@ def pitlane_dashboard():
             kart_mix_policy = circuit_row['kart_mix_policy']
     kart_types = [dict(k) for k in kart_types_raw]
 
-    # Build calendar data: { "YYYY-MM-DD": [ {slot, pilots, source, contact, kart}, ... ] }
+    # Build calendar data: { "YYYY-MM-DD": [ {id, slot, pilots, source, contact, kart, dni}, ... ] }
     from collections import defaultdict
     _cal = defaultdict(list)
     for b in all_bookings:
         _cal[b['booking_date']].append({
+            'id': b['id'],
             'slot': b['time_slot'],
             'pilots': b.get('num_pilots', 1) or 1,
             'source': b.get('source', 'manual'),
             'contact': b.get('contact_name') or '',
             'kart': b.get('kart_name') or '',
+            'dni': b.get('contact_dni') or '',
         })
     for k in _cal:
         _cal[k].sort(key=lambda x: x['slot'])
@@ -2184,6 +2375,26 @@ def pitlane_delete_pilot_booking(bid):
         flash('No tienes permiso para eliminar esta reserva.', 'error')
     conn.close()
     return redirect(url_for('pitlane_dashboard') + '#bookings')
+
+@app.route('/pitlane/booking/delete-ajax/<int:bid>', methods=['POST'])
+@pitlane_required
+def pitlane_delete_booking_ajax(bid):
+    source = request.json.get('source') if request.is_json else request.form.get('source', 'manual')
+    conn = get_db()
+    if source == 'pilot':
+        linked = conn.execute('SELECT linked_circuit_id FROM circuit_accounts WHERE id=?', (session['circuit_id'],)).fetchone()
+        if linked and linked['linked_circuit_id']:
+            conn.execute('DELETE FROM bookings WHERE id=? AND circuit_id=?', (bid, linked['linked_circuit_id']))
+            conn.commit()
+            conn.close()
+            return {'ok': True}
+        conn.close()
+        return {'ok': False, 'error': 'Sin permiso'}, 403
+    else:
+        conn.execute('DELETE FROM circuit_manual_bookings WHERE id=? AND account_id=?', (bid, session['circuit_id']))
+        conn.commit()
+        conn.close()
+        return {'ok': True}
 
 @app.route('/pitlane/logout')
 def pitlane_logout():

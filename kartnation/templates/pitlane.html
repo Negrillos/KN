@@ -75,28 +75,7 @@
         overflow: hidden;
     }
     .auth-panel-top { height: 4px; background: var(--accent); }
-    .auth-tabs {
-        display: flex;
-        border-bottom: 1px solid var(--border);
-    }
-    .auth-tab {
-        flex: 1; padding: 1rem;
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 0.82rem; font-weight: 700;
-        letter-spacing: 0.1em; text-transform: uppercase;
-        color: var(--text-muted); background: none; border: none;
-        cursor: pointer; transition: all 0.2s;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-    }
-    .auth-tab.active {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-        background: rgba(255,77,0,0.04);
-    }
     .auth-body { padding: 1.75rem; }
-    .auth-form { display: none; }
-    .auth-form.active { display: block; }
 </style>
 {% endblock %}
 
@@ -123,14 +102,10 @@
         <!-- AUTH PANEL -->
         <div class="auth-panel">
             <div class="auth-panel-top"></div>
-            <div class="auth-tabs">
-                <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Iniciar sesión</button>
-                <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Registrarse</button>
-            </div>
-            <div class="auth-body">
+            <div class="auth-body" style="padding-top:1.5rem;">
 
                 <!-- LOGIN -->
-                <form class="auth-form active" id="formLogin" method="POST" action="{{ url_for('pitlane') }}">
+                <form method="POST" action="{{ url_for('pitlane') }}">
                     <input type="hidden" name="action" value="login">
                     <div class="form-group">
                         <label for="login_username">Usuario del circuito</label>
@@ -145,44 +120,16 @@
                     </button>
                 </form>
 
-                <!-- REGISTER -->
-                <form class="auth-form" id="formRegister" method="POST" action="{{ url_for('pitlane') }}">
-                    <input type="hidden" name="action" value="register">
-                    <div class="form-group">
-                        <label for="reg_circuit_name">Nombre del circuito <span style="color:var(--accent)">*</span></label>
-                        <input type="text" id="reg_circuit_name" name="circuit_name" placeholder="Karting Barcelona..." required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg_city">Población <span style="color:var(--accent)">*</span></label>
-                        <input type="text" id="reg_city" name="city" placeholder="Barcelona" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg_username">Usuario de acceso <span style="color:var(--accent)">*</span></label>
-                        <input type="text" id="reg_username" name="username" placeholder="username_circuito" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg_password">Contraseña <span style="color:var(--accent)">*</span></label>
-                        <input type="password" id="reg_password" name="password" placeholder="Mínimo 6 caracteres" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
-                        Crear cuenta de circuito
-                    </button>
-                    <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.75rem;line-height:1.5;">
-                        El registro es provisional. Un administrador de KARTNATION revisará y activará tu cuenta.
-                    </p>
-                </form>
+                <div style="height:1px;background:var(--border);margin:1.5rem 0;"></div>
+                <div style="text-align:center;">
+                    <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.6rem;">¿Tu circuito aún no está en KARTNATION?</p>
+                    <a href="{{ url_for('pitlane_solicitud') }}" class="btn btn-secondary btn-full">
+                        Solicitar acceso al PitLane →
+                    </a>
+                </div>
 
             </div>
         </div>
     </div>
 </div>
-
-<script>
-function switchTab(tab) {
-    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
-    document.getElementById('formLogin').classList.toggle('active', tab === 'login');
-    document.getElementById('formRegister').classList.toggle('active', tab === 'register');
-}
-</script>
 {% endblock %}
