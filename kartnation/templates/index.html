@@ -3,32 +3,71 @@
 
 {% block head %}
 <style>
+    /* ── HERO ── */
     .hero {
         min-height: calc(100vh - 60px);
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 5rem 0;
+        padding: 5rem 0 4rem;
         position: relative;
         overflow: hidden;
     }
 
-    .hero::before {
-        content: '';
+    .hero-glow-1 {
         position: absolute;
         top: -200px; left: -200px;
         width: 700px; height: 700px;
-        background: radial-gradient(circle, rgba(255,77,0,0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255,77,0,0.12) 0%, transparent 65%);
         pointer-events: none;
+        animation: glowPulse 6s ease-in-out infinite;
+    }
+    .hero-glow-2 {
+        position: absolute;
+        bottom: -150px; right: -100px;
+        width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(255,77,0,0.05) 0%, transparent 65%);
+        pointer-events: none;
+        animation: glowPulse 8s ease-in-out infinite reverse;
     }
 
-    .hero::after {
+    @keyframes glowPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.08); opacity: 0.7; }
+    }
+
+    /* Decorative racing lines */
+    .hero-track-lines {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40%;
+        pointer-events: none;
+        overflow: hidden;
+        opacity: 0.08;
+    }
+    .hero-track-lines::before {
         content: '';
         position: absolute;
-        bottom: -100px; right: -100px;
-        width: 500px; height: 500px;
-        background: radial-gradient(circle, rgba(255,77,0,0.04) 0%, transparent 70%);
-        pointer-events: none;
+        top: 0; right: 80px;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent);
+        animation: trackLine 3s ease-in-out infinite;
+    }
+    .hero-track-lines::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 160px;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(180deg, transparent, var(--text) 40%, var(--text) 60%, transparent);
+        animation: trackLine 3s ease-in-out 0.5s infinite;
+    }
+    @keyframes trackLine {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
     }
 
     .hero-eyebrow {
@@ -37,6 +76,8 @@
         letter-spacing: 0.25em; text-transform: uppercase;
         color: var(--accent); margin-bottom: 1.5rem;
         display: flex; align-items: center; gap: 0.6rem;
+        opacity: 0;
+        animation: heroFadeUp 0.6s ease 0.1s forwards;
     }
 
     .hero-eyebrow::before {
@@ -52,6 +93,8 @@
         line-height: 0.9;
         letter-spacing: 0.02em;
         margin-bottom: 2rem;
+        opacity: 0;
+        animation: heroFadeUp 0.6s ease 0.2s forwards;
     }
 
     .hero-title em {
@@ -66,6 +109,8 @@
         max-width: 560px;
         margin-bottom: 3rem;
         line-height: 1.7;
+        opacity: 0;
+        animation: heroFadeUp 0.6s ease 0.3s forwards;
     }
 
     .hero-actions {
@@ -73,6 +118,22 @@
         gap: 1rem;
         flex-wrap: wrap;
         margin-bottom: 4rem;
+        opacity: 0;
+        animation: heroFadeUp 0.6s ease 0.4s forwards;
+    }
+
+    .hero-actions .btn-primary {
+        font-size: 1rem;
+        padding: 0.9rem 2.25rem;
+    }
+    .hero-actions .btn-secondary {
+        font-size: 1rem;
+        padding: 0.9rem 2.25rem;
+    }
+
+    @keyframes heroFadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
     .hero-stats {
@@ -81,6 +142,8 @@
         flex-wrap: wrap;
         padding-top: 3rem;
         border-top: 1px solid var(--border);
+        opacity: 0;
+        animation: heroFadeUp 0.6s ease 0.55s forwards;
     }
 
     .stat-num {
@@ -99,17 +162,114 @@
         text-transform: uppercase;
     }
 
-    /* Features section */
-    .features {
-        padding: 5rem 0;
-    }
-
+    /* ── RACING LINE ── */
     .racing-line-divider {
         width: 100%;
         height: 2px;
-        background: var(--accent);
+        background: linear-gradient(90deg, var(--accent) 0%, rgba(255,77,0,0.2) 100%);
         position: relative;
-        margin: 0 0 0 0;
+        margin: 0;
+    }
+
+    .racing-line-divider::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--accent);
+        font-size: 0.65rem;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how-it-works {
+        padding: 5rem 0;
+    }
+
+    .section-eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        letter-spacing: 0.02em;
+        margin-bottom: 0.75rem;
+    }
+
+    .section-sub {
+        color: var(--text-muted);
+        font-size: 1rem;
+        max-width: 480px;
+        line-height: 1.65;
+        margin-bottom: 3rem;
+    }
+
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        position: relative;
+    }
+
+    .steps-grid::before {
+        content: '';
+        position: absolute;
+        top: 28px;
+        left: calc(16.66% + 1.5rem);
+        right: calc(16.66% + 1.5rem);
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), rgba(255,77,0,0.2));
+        z-index: 0;
+    }
+
+    .step-card {
+        padding: 2rem 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-number {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 6px rgba(255,77,0,0.15);
+        transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .step-card:hover .step-number {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(255,77,0,0.12);
+    }
+
+    .step-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.4rem;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.6rem;
+    }
+
+    .step-desc {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.65;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+        padding: 0 0 5rem;
     }
 
     .features-grid {
@@ -124,44 +284,61 @@
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
         padding: 2rem;
-        transition: border-color 0.2s;
+        transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
         display: flex;
         flex-direction: column;
+        cursor: default;
     }
 
-    .feature-card:hover { border-color: var(--accent); }
+    .feature-card:hover {
+        border-color: rgba(255,77,0,0.4);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
 
     .feature-icon {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.5rem;
-        letter-spacing: 0.05em;
-        color: var(--accent);
+        font-size: 2rem;
         margin-bottom: 1rem;
         line-height: 1;
-        height: 3rem;
+        height: 2.5rem;
         display: flex;
         align-items: center;
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: scale(1.15) rotate(-5deg);
+    }
+
+    .feature-num {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 0.85rem;
+        color: var(--accent);
+        letter-spacing: 0.1em;
+        margin-bottom: 0.4rem;
     }
 
     .feature-title {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         letter-spacing: 0.03em;
         margin-bottom: 0.75rem;
-        line-height: 1.15;
-        height: 3rem;
-        display: flex;
-        align-items: flex-start;
-        overflow: hidden;
+        line-height: 1.2;
     }
 
     .feature-divider {
-        width: 40px;
+        width: 32px;
         height: 2px;
         background: var(--accent);
-        opacity: 0.6;
+        opacity: 0.5;
         margin-bottom: 0.75rem;
         flex-shrink: 0;
+        transition: width 0.3s ease, opacity 0.3s ease;
+    }
+
+    .feature-card:hover .feature-divider {
+        width: 56px;
+        opacity: 0.9;
     }
 
     .feature-desc {
@@ -171,18 +348,157 @@
         flex: 1;
     }
 
-    .section-eyebrow {
+    /* ── SOCIAL PROOF ── */
+    .social-proof {
+        padding: 3rem 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 5rem;
+    }
+
+    .proof-label {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .proof-grid {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .proof-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 600;
+        font-size: 0.88rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        transition: border-color var(--transition), color var(--transition);
+    }
+
+    .proof-item:hover { border-color: var(--border-bright); color: var(--text); }
+    .proof-item span:first-child { font-size: 1.1rem; }
+
+    /* ── CTA BANNER ── */
+    .cta-section {
+        margin-bottom: 5rem;
+    }
+
+    .cta-card {
+        background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,77,0,0.04) 60%, rgba(255,215,0,0.04) 100%);
+        border: 1px solid rgba(255,77,0,0.3);
+        border-radius: 14px;
+        padding: 4rem 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-card::before {
+        content: 'KARTNATION';
+        position: absolute;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 11rem;
+        opacity: 0.035;
+        right: -2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        line-height: 1;
+        pointer-events: none;
+        letter-spacing: -0.05em;
+        white-space: nowrap;
+    }
+
+    .cta-eyebrow {
         font-family: 'Barlow Condensed', sans-serif;
         font-size: 0.78rem; font-weight: 700;
         letter-spacing: 0.2em; text-transform: uppercase;
         color: var(--accent); margin-bottom: 0.75rem;
     }
 
-    .section-title {
+    .cta-title {
         font-family: 'Bebas Neue', sans-serif;
         font-size: clamp(2rem, 4vw, 3.5rem);
         letter-spacing: 0.02em;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cta-sub {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.65;
+    }
+
+    .cta-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-trust {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+    }
+
+    .trust-item svg {
+        width: 14px; height: 14px;
+        color: var(--green);
+        flex-shrink: 0;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+        .hero { min-height: auto; padding: 3rem 0 2.5rem; }
+        .hero-stats { gap: 1.5rem; }
+        .hero-track-lines { display: none; }
+
+        .steps-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+        .steps-grid::before { display: none; }
+        .step-card { padding: 1.25rem 0; }
+
+        .cta-card { padding: 2.5rem 1.5rem; }
+        .cta-card::before { display: none; }
+
+        .proof-grid { gap: 0.75rem; }
+        .proof-item { font-size: 0.78rem; padding: 0.5rem 0.9rem; }
+    }
+
+    @media (max-width: 480px) {
+        .hero-actions { flex-direction: column; }
+        .hero-actions .btn { width: 100%; justify-content: center; }
+        .cta-actions { flex-direction: column; align-items: center; }
     }
 </style>
 {% endblock %}
@@ -191,7 +507,11 @@
 <div class="container">
 
     <!-- HERO -->
-    <section class="hero">
+    <section class="hero" aria-label="Sección principal">
+        <div class="hero-glow-1" aria-hidden="true"></div>
+        <div class="hero-glow-2" aria-hidden="true"></div>
+        <div class="hero-track-lines" aria-hidden="true"></div>
+
         <div class="hero-eyebrow">La plataforma de karting de España</div>
         <h1 class="hero-title">
             ELIGE TU
@@ -202,21 +522,21 @@
         <p class="hero-sub">
             Accede a los mejores kartódromos de España.
             Reserva en segundos, compite con pilotos de tu nivel
-            y sigue tu evolución.
+            y sigue tu evolución tanda a tanda.
         </p>
         <div class="hero-actions">
-            <a href="{{ url_for('circuitos') }}" class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2rem;">
-                Ver circuitos disponibles →
+            <a href="{{ url_for('circuitos') }}" class="btn btn-primary">
+                Ver circuitos →
             </a>
             {% if not session.get('user_id') %}
-            <a href="{{ url_for('register') }}" class="btn btn-secondary" style="font-size:1rem;padding:0.85rem 2rem;">
+            <a href="{{ url_for('register') }}" class="btn btn-secondary">
                 Crear cuenta gratis
             </a>
             {% endif %}
         </div>
         <div class="hero-stats">
             <div>
-                <div class="stat-num">9</div>
+                <div class="stat-num" data-count="9">9</div>
                 <div class="stat-label">Circuitos disponibles</div>
             </div>
             <div>
@@ -234,51 +554,115 @@
         </div>
     </section>
 
-    <!-- DIVIDER -->
-    <div class="racing-line-divider"></div>
+    <!-- RACING LINE -->
+    <div class="racing-line-divider" aria-hidden="true"></div>
 
-    <!-- FEATURES -->
-    <section class="features">
-        <div class="section-eyebrow">Por qué KARTNATION</div>
-        <h2 class="section-title">Todo lo que necesitas para pilotar</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">01</div>
-                <div class="feature-title">Encuentra tu circuito</div>
-                <div class="feature-divider"></div>
-                <p class="feature-desc">Indoor o outdoor, cerca o lejos. Encuentra el circuito perfecto para tu próxima tanda en segundos.</p>
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works" aria-labelledby="how-title">
+        <div class="section-eyebrow">Así de fácil</div>
+        <h2 class="section-title" id="how-title">Reserva en 3 pasos</h2>
+        <p class="section-sub">Sin llamadas, sin esperas, sin complicaciones. Del sofá a la parrilla en minutos.</p>
+
+        <div class="steps-grid" role="list">
+            <div class="step-card fade-up" role="listitem">
+                <div class="step-number" aria-hidden="true">1</div>
+                <div class="step-title">Elige tu circuito</div>
+                <p class="step-desc">Explora todos los circuitos disponibles, filtra por tipo de pista, ubicación y disponibilidad en tiempo real.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">02</div>
-                <div class="feature-title">Reserva cuando lo necesites</div>
-                <div class="feature-divider"></div>
-                <p class="feature-desc">Sin llamadas, sin esperas. Elige tu hora, confirma tu plaza y aparece listo para pilotar.</p>
+            <div class="step-card fade-up" role="listitem" style="transition-delay:0.1s;">
+                <div class="step-number" aria-hidden="true">2</div>
+                <div class="step-title">Selecciona tu tanda</div>
+                <p class="step-desc">Elige la hora que mejor te convenga, selecciona tu tipo de kart y confirma tu plaza en segundos.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">03</div>
-                <div class="feature-title">Evoluciona como piloto</div>
-                <div class="feature-divider"></div>
-                <p class="feature-desc">Cada tanda suma. Crea tu perfil, evoluciona como piloto y deja tu huella en cada circuito.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">04</div>
-                <div class="feature-title">Corre en comunidad</div>
-                <div class="feature-divider"></div>
-                <p class="feature-desc">Encuentra rivales, haz amigos y vive el karting en comunidad. Cada tanda es una nueva historia.</p>
+            <div class="step-card fade-up" role="listitem" style="transition-delay:0.2s;">
+                <div class="step-number" aria-hidden="true">3</div>
+                <div class="step-title">¡A pista!</div>
+                <p class="step-desc">Aparece en el circuito, recoge tu casco y a rodar. Cada tanda queda registrada en tu perfil de piloto.</p>
             </div>
         </div>
     </section>
 
+    <!-- RACING LINE -->
+    <div class="racing-line-divider" aria-hidden="true"></div>
+
+    <!-- FEATURES -->
+    <section class="features" aria-labelledby="features-title">
+        <div style="padding-top:5rem;">
+            <div class="section-eyebrow">Por qué KARTNATION</div>
+            <h2 class="section-title" id="features-title">Todo lo que necesitas para pilotar</h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card fade-up">
+                <div class="feature-icon" aria-hidden="true">🏁</div>
+                <div class="feature-num">01</div>
+                <div class="feature-title">Encuentra tu circuito</div>
+                <div class="feature-divider" aria-hidden="true"></div>
+                <p class="feature-desc">Indoor o outdoor, cerca o lejos. Encuentra el circuito perfecto para tu próxima tanda con filtros en tiempo real.</p>
+            </div>
+            <div class="feature-card fade-up" style="transition-delay:0.08s;">
+                <div class="feature-icon" aria-hidden="true">⚡</div>
+                <div class="feature-num">02</div>
+                <div class="feature-title">Reserva cuando lo necesites</div>
+                <div class="feature-divider" aria-hidden="true"></div>
+                <p class="feature-desc">Sin llamadas, sin esperas. Elige tu hora, confirma tu plaza y aparece listo para pilotar.</p>
+            </div>
+            <div class="feature-card fade-up" style="transition-delay:0.16s;">
+                <div class="feature-icon" aria-hidden="true">📈</div>
+                <div class="feature-num">03</div>
+                <div class="feature-title">Evoluciona como piloto</div>
+                <div class="feature-divider" aria-hidden="true"></div>
+                <p class="feature-desc">Cada tanda suma. Crea tu perfil, lleva el registro de tus sesiones y deja tu huella en cada circuito.</p>
+            </div>
+            <div class="feature-card fade-up" style="transition-delay:0.24s;">
+                <div class="feature-icon" aria-hidden="true">🤝</div>
+                <div class="feature-num">04</div>
+                <div class="feature-title">Corre en comunidad</div>
+                <div class="feature-divider" aria-hidden="true"></div>
+                <p class="feature-desc">Encuentra rivales, compite en grupo y vive el karting en comunidad. Cada tanda es una nueva historia.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <div class="social-proof fade-up" aria-label="Circuitos asociados">
+        <div class="proof-label">Circuitos ya en la plataforma</div>
+        <div class="proof-grid">
+            <div class="proof-item"><span aria-hidden="true">🏖</span> Karting Coma-Ruga</div>
+            <div class="proof-item"><span aria-hidden="true">🚀</span> Karting Vendrell</div>
+            <div class="proof-item"><span aria-hidden="true">🌊</span> Karting Calafat</div>
+            <div class="proof-item"><span aria-hidden="true">🏁</span> +6 circuitos más</div>
+        </div>
+    </div>
+
     {% if not session.get('user_id') %}
     <!-- CTA -->
-    <div style="background:linear-gradient(135deg,rgba(255,77,0,0.1) 0%,rgba(255,77,0,0.04) 100%);border:1px solid rgba(255,77,0,0.25);border-radius:var(--radius-lg);padding:3.5rem;text-align:center;margin-bottom:4rem;position:relative;overflow:hidden;">
-        <div style="position:absolute;font-family:'Bebas Neue',sans-serif;font-size:12rem;opacity:0.04;right:-1rem;top:50%;transform:translateY(-50%);line-height:1;pointer-events:none;letter-spacing:-0.05em;">KARTNATION</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem;">Empieza hoy</div>
-        <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,4vw,3.5rem);letter-spacing:0.02em;margin-bottom:0.75rem;">¿Listo para ponerte el casco?</h2>
-        <p style="color:var(--text-muted);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;">Crea tu perfil de piloto, reserva tu primera tanda y empieza a competir hoy. Es gratis.</p>
-        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
-            <a href="{{ url_for('register') }}" class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2.5rem;">Crear cuenta gratis</a>
-            <a href="{{ url_for('circuitos') }}" class="btn btn-secondary" style="font-size:1rem;padding:0.85rem 2.5rem;">Ver circuitos</a>
+    <div class="cta-section">
+        <div class="cta-card fade-up">
+            <div class="cta-eyebrow">Empieza hoy</div>
+            <h2 class="cta-title">¿Listo para ponerte el casco?</h2>
+            <p class="cta-sub">Crea tu perfil de piloto, reserva tu primera tanda y empieza a competir hoy. Completamente gratis.</p>
+            <div class="cta-actions">
+                <a href="{{ url_for('register') }}" class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2.5rem;">
+                    Crear cuenta gratis
+                </a>
+                <a href="{{ url_for('circuitos') }}" class="btn btn-secondary" style="font-size:1rem;padding:0.9rem 2.5rem;">
+                    Ver circuitos
+                </a>
+            </div>
+            <div class="cta-trust" role="list">
+                <div class="trust-item" role="listitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    Registro gratuito
+                </div>
+                <div class="trust-item" role="listitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    Sin tarjeta de crédito
+                </div>
+                <div class="trust-item" role="listitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    Cancela cuando quieras
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
