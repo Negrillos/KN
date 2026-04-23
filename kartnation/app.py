@@ -1169,6 +1169,8 @@ def api_complete_profile():
     return jsonify({'ok': True})
 
 def _check_profile_complete():
+    if session.get('is_admin'):
+        return []
     conn = get_db()
     user = conn.execute('SELECT dni, fecha_nacimiento FROM users WHERE id=?', (session['user_id'],)).fetchone()
     conn.close()
@@ -1296,6 +1298,17 @@ def book_multi():
     confirmed = []
     errors    = []
 
+    # Compute user age for age-gate checks
+    user_row = conn.execute('SELECT fecha_nacimiento FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    user_age = None
+    if user_row and user_row['fecha_nacimiento']:
+        try:
+            birth = date.fromisoformat(user_row['fecha_nacimiento'])
+            today = date.today()
+            user_age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+        except ValueError:
+            pass
+
     for entry in slots:
         time_slot    = entry['time_slot']
         kart_type_id = entry['kart_type_id']
@@ -1347,6 +1360,13 @@ def book_multi():
                     errors.append(f'Tanda {time_slot}: fijada como "{group_label}". No se pueden mezclar adultos con biplaza/junior.')
                     continue
 
+        # Age gate
+        if kart_type_id and user_age is not None:
+            kt_age = conn.execute('SELECT min_age, name FROM kart_types WHERE id=?', (kart_type_id,)).fetchone()
+            if kt_age and kt_age['min_age'] and kt_age['min_age'] > 0 and user_age < kt_age['min_age']:
+                errors.append(f'Tanda {time_slot}: edad mínima para "{kt_age["name"]}" es {kt_age["min_age"]} años.')
+                continue
+
         try:
             conn.execute('INSERT INTO bookings (user_id,circuit_id,kart_type_id,booking_date,time_slot) VALUES (?,?,?,?,?)',
                 (session['user_id'], circuit_id, kart_type_id, booking_date, time_slot))
@@ -1386,6 +1406,18 @@ def api_slot_users():
     circuit_id = request.args.get('circuit_id')
     booking_date = request.args.get('date')
     time_slot = request.args.get('slot')
+
+    # Pilots cannot see occupancy of past slots
+    is_pitlane = 'pitlane_account_id' in session
+    is_admin = session.get('is_admin')
+    if not is_pitlane and not is_admin:
+        try:
+            slot_dt = datetime.strptime(f'{booking_date} {time_slot}', '%Y-%m-%d %H:%M')
+            if slot_dt <= datetime.now():
+                return jsonify([])
+        except Exception:
+            pass
+
     conn = get_db()
     bookings = conn.execute('''SELECT u.username, u.full_name, u.avatar_initial, u.races_completed,
         kt.name as kart_name, kt.engine_cc
@@ -2201,11 +2233,28 @@ def pitlane_dashboard():
     import json as _json
     calendar_data = _json.dumps(dict(_cal))
 
+    # Clients: unique pilots who have ever booked at this circuit
+    clients = []
+    if linked and linked['linked_circuit_id']:
+        clients = conn.execute('''
+            SELECT u.id, u.full_name, u.email, u."teléfono" as phone, u.dni,
+                   u.karting_level, u.races_completed,
+                   COUNT(b.id) as total_visits,
+                   MAX(b.booking_date) as last_visit
+            FROM bookings b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.circuit_id = ?
+            GROUP BY u.id
+            ORDER BY last_visit DESC
+        ''', (linked['linked_circuit_id'],)).fetchall()
+        clients = [dict(c) for c in clients]
+
     conn.close()
     return render_template('pitlane_dashboard.html',
         info=info, schedule=schedule, bookings=all_bookings, kart_types=kart_types,
         overrides=overrides, weekday_names=WEEKDAY_NAMES, today=today,
-        kart_mix_policy=kart_mix_policy, calendar_data=calendar_data)
+        kart_mix_policy=kart_mix_policy, calendar_data=calendar_data,
+        clients=clients)
 
 @app.route('/pitlane/info', methods=['POST'])
 @pitlane_required

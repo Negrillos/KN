@@ -128,12 +128,14 @@
             background: var(--bg3);
             border: 1px solid var(--border);
             border-radius: 50px;
-            padding: 0.3rem 0.9rem 0.3rem 0.3rem;
+            padding: 0.3rem 0.75rem 0.3rem 0.3rem;
             font-size: 0.82rem;
             font-weight: 600;
             color: var(--text);
             text-decoration: none;
+            cursor: pointer;
             transition: border-color 0.2s;
+            user-select: none;
         }
 
         .avatar-chip:hover { border-color: var(--border-bright); }
@@ -149,7 +151,95 @@
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1rem;
             color: #fff;
+            flex-shrink: 0;
         }
+
+        /* ── NAV DROPDOWN ── */
+        .nav-dropdown { position: relative; }
+
+        .nav-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 210px;
+            background: var(--bg2);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            padding: 0.35rem;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-8px);
+            transition: opacity 0.18s, transform 0.18s;
+            z-index: 500;
+        }
+
+        .nav-dropdown-menu.open {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .nav-dd-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.65rem 0.85rem;
+            border-radius: var(--radius);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .nav-dd-item:hover { background: var(--card-hover); color: var(--text); }
+        .nav-dd-item.danger { color: var(--red); }
+        .nav-dd-item.danger:hover { background: rgba(255,45,85,0.1); color: var(--red); }
+
+        .nav-dd-divider { height: 1px; background: var(--border); margin: 0.3rem 0.5rem; }
+
+        .nav-dd-icon { width: 18px; text-align: center; flex-shrink: 0; opacity: 0.7; }
+
+        .nav-dd-mobile-only { display: none; }
+
+        @media (max-width: 768px) {
+            .nav-dd-mobile-only { display: block; }
+        }
+
+        /* ── HAMBURGER (mobile, non-logged-in) ── */
+        .nav-hamburger {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .nav-mobile-menu {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem;
+            z-index: 490;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .nav-mobile-menu.open { display: flex; }
 
         /* ── FLASH MESSAGES ── */
         .flashes {
@@ -320,7 +410,8 @@
         @media (max-width: 768px) {
             nav { padding: 0 1rem; }
             .container { padding: 0 1rem; }
-            .nav-links a:not(.btn-nav):not(.avatar-chip) { display: none; }
+            .nav-links a:not(.btn-nav):not(.avatar-chip):not(.nav-hamburger):not(.nav-dd-item) { display: none; }
+            .nav-hamburger { display: flex; }
         }
     </style>
     {% block head %}{% endblock %}
@@ -334,21 +425,92 @@
             <a href="{{ url_for('circuitos') }}">Circuitos</a>
             <a href="{{ url_for('soporte') }}">Soporte</a>
             {% if session.get('user_id') %}
-                {% if session.get('is_admin') %}
-                <a href="{{ url_for('admin_panel') }}" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,215,0,0.1);color:var(--accent2);border:1px solid rgba(255,215,0,0.3);padding:0.4rem 0.9rem;border-radius:var(--radius);text-decoration:none;">⚙️ Admin</a>
-                {% endif %}
-                <a href="{{ url_for('profile') }}" class="avatar-chip">
-                    <div class="avatar-dot">{{ session.get('username', 'U')[0].upper() }}</div>
-                    {{ session.get('username') }}
-                </a>
-                <a href="{{ url_for('logout') }}" style="color:var(--text-muted);font-size:0.82rem;padding:0.4rem 0.7rem;">Salir</a>
+                <!-- Avatar chip with dropdown -->
+                <div class="nav-dropdown" id="navDropdown">
+                    <div class="avatar-chip" onclick="toggleNavDropdown(event)">
+                        <div class="avatar-dot">{{ session.get('username', 'U')[0].upper() }}</div>
+                        {{ session.get('username') }}
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;opacity:0.5;transition:transform 0.2s;" id="navChevron"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="nav-dropdown-menu" id="navDropdownMenu">
+                        <a href="{{ url_for('profile') }}" class="nav-dd-item">
+                            <span class="nav-dd-icon">👤</span> Mi perfil
+                        </a>
+                        <div class="nav-dd-mobile-only">
+                            <a href="{{ url_for('circuitos') }}" class="nav-dd-item">
+                                <span class="nav-dd-icon">🏁</span> Circuitos
+                            </a>
+                            <a href="{{ url_for('soporte') }}" class="nav-dd-item">
+                                <span class="nav-dd-icon">💬</span> Soporte
+                            </a>
+                        </div>
+                        <div class="nav-dd-divider"></div>
+                        <a href="{{ url_for('logout') }}" class="nav-dd-item danger">
+                            <span class="nav-dd-icon">↩</span> Cerrar sesión
+                        </a>
+                    </div>
+                </div>
             {% else %}
                 <a href="{{ url_for('login') }}">Entrar</a>
                 <a href="{{ url_for('register') }}" class="btn-nav">Únete</a>
+                <!-- Mobile hamburger for non-logged-in -->
+                <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
             {% endif %}
         </div>
     </div>
 </nav>
+
+<!-- Mobile menu (non-logged-in) -->
+{% if not session.get('user_id') %}
+<div class="nav-mobile-menu" id="navMobileMenu">
+    <a href="{{ url_for('circuitos') }}" class="nav-dd-item">
+        <span class="nav-dd-icon">🏁</span> Circuitos
+    </a>
+    <a href="{{ url_for('soporte') }}" class="nav-dd-item">
+        <span class="nav-dd-icon">💬</span> Soporte
+    </a>
+    <div class="nav-dd-divider"></div>
+    <a href="{{ url_for('login') }}" class="nav-dd-item">
+        <span class="nav-dd-icon">→</span> Entrar
+    </a>
+    <a href="{{ url_for('register') }}" class="nav-dd-item" style="color:var(--accent);">
+        <span class="nav-dd-icon">✦</span> Únete gratis
+    </a>
+</div>
+{% endif %}
+
+<script>
+function toggleNavDropdown(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('navDropdownMenu');
+    const chevron = document.getElementById('navChevron');
+    const isOpen = menu.classList.toggle('open');
+    if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+}
+
+function toggleMobileMenu() {
+    const m = document.getElementById('navMobileMenu');
+    if (m) m.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+    const dd = document.getElementById('navDropdown');
+    if (dd && !dd.contains(e.target)) {
+        const menu = document.getElementById('navDropdownMenu');
+        const chevron = document.getElementById('navChevron');
+        if (menu) menu.classList.remove('open');
+        if (chevron) chevron.style.transform = '';
+    }
+    const mm = document.getElementById('navMobileMenu');
+    if (mm && !mm.classList.contains('open')) return;
+    const hb = document.querySelector('.nav-hamburger');
+    if (mm && hb && !hb.contains(e.target) && !mm.contains(e.target)) {
+        mm.classList.remove('open');
+    }
+});
+</script>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -371,6 +533,7 @@
 
 {% block content %}{% endblock %}
 
+{% block footer %}
 <footer>
     <strong>KARTNATION</strong> — La plataforma de karting más rápida de España &nbsp;|&nbsp; 🏁 Todos los circuitos, un solo lugar
     <div style="margin-top:0.75rem;">
@@ -380,6 +543,7 @@
         </a>
     </div>
 </footer>
+{% endblock %}
 
 </body>
 </html>

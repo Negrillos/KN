@@ -113,7 +113,35 @@
 
     @media (max-width: 900px) {
         .booking-layout { grid-template-columns: 1fr; }
-        .booking-sidebar { order: -1; }
+        /* sidebar goes BELOW slots on mobile */
+    }
+
+    /* ── MOBILE COMPACT ── */
+    @media (max-width: 640px) {
+        .circuit-hero { padding: 1.5rem 0 1rem; margin-bottom: 1.5rem; }
+        .circuit-big-title { font-size: 2rem; }
+        .circuit-info-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1rem; }
+        .info-tile { padding: 0.6rem 0.4rem; }
+        .info-tile-val { font-size: 1.3rem; }
+        .info-tile-label { font-size: 0.6rem; }
+
+        .booking-section-title { font-size: 1.4rem; margin-bottom: 1rem; }
+        .date-picker-wrapper { gap: 0.5rem; margin-bottom: 1rem; }
+
+        /* Slot cards more compact on mobile */
+        .slots-grid { gap: 0.3rem; }
+        .slot-card { padding: 0.5rem 0.15rem 0.4rem; }
+        .slot-time { font-size: 0.82rem; }
+        .slot-occupancy { font-size: 0.52rem; margin-top: 0.2rem; }
+        .slot-bar { margin-top: 0.3rem; }
+
+        /* Sidebar on mobile: hide marketing features, keep price + cart + leaderboard */
+        .sidebar-features { display: none; }
+        .sidebar-card-top { height: 3px; }
+        .sidebar-price { font-size: 1.8rem !important; }
+        .sidebar-price-sub { margin-bottom: 0.75rem; }
+        .sidebar-body { padding: 1rem; }
+        .booking-sidebar { margin-top: 0; }
     }
 
     .booking-section-title {
@@ -163,88 +191,85 @@
         max-width: 200px;
     }
 
-    /* Slots grid */
+    /* Slots grid — always 5 columns */
     .slots-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 0.6rem;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.45rem;
     }
 
     .slot-card {
-        background: var(--card-bg);
+        background: var(--bg3);
         border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 0.75rem;
+        border-radius: 6px;
+        padding: 0.65rem 0.3rem 0.55rem;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: border-color 0.15s, background 0.15s;
         position: relative;
         text-align: center;
     }
 
-    .slot-card:hover:not(.slot-full):not(.slot-booked) {
+    .slot-card:hover:not(.slot-full):not(.slot-booked):not(.slot-past) {
         border-color: var(--accent);
-        background: rgba(255,77,0,0.06);
+        background: rgba(255,77,0,0.07);
     }
 
     .slot-card.slot-booked {
-        border-color: var(--green);
-        background: rgba(124,255,0,0.06);
+        border-color: rgba(124,255,0,0.5);
+        background: rgba(124,255,0,0.07);
     }
-    .slot-card.slot-booked .slot-time {
-        color: var(--green);
-    }
-    .slot-card.slot-booked .slot-occupancy {
-        color: #ffffff;
-    }
-    .slot-card.slot-booked .slot-bar-fill {
-        background: var(--green) !important;
-    }
+    .slot-card.slot-booked .slot-time { color: var(--green); }
+    .slot-card.slot-booked .slot-bar-fill { background: var(--green) !important; }
 
     .slot-card.slot-full {
-        opacity: 0.4;
+        opacity: 0.38;
         cursor: not-allowed;
     }
+    .slot-card.slot-full .slot-time { text-decoration: line-through; }
+
     .slot-card.slot-past {
-        opacity: 0.25;
+        opacity: 0.22;
         cursor: not-allowed;
         filter: grayscale(1);
     }
+    .slot-card.slot-past .slot-time { text-decoration: line-through; }
 
     .slot-time {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.4rem;
-        letter-spacing: 0.05em;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.02em;
         color: var(--text);
+        line-height: 1;
     }
 
-
-
     .slot-occupancy {
-        font-size: 0.7rem;
+        font-size: 0.62rem;
         color: var(--text-dim);
-        margin-top: 0.2rem;
+        margin-top: 0.3rem;
+        line-height: 1.2;
     }
 
     .slot-bar {
-        height: 3px;
-        border-radius: 2px;
-        background: var(--border);
+        height: 2px;
+        border-radius: 1px;
+        background: rgba(255,255,255,0.06);
         margin-top: 0.4rem;
         overflow: hidden;
     }
 
     .slot-bar-fill {
         height: 100%;
-        border-radius: 2px;
+        border-radius: 1px;
         transition: width 0.3s;
     }
 
     .slot-status-dot {
         position: absolute;
-        top: 0.4rem;
-        right: 0.4rem;
-        width: 6px;
-        height: 6px;
+        top: 0.3rem;
+        right: 0.3rem;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
     }
 
@@ -325,6 +350,17 @@
         overflow-y: auto;
         flex: 1;
     }
+
+    .pilot-list-wrap {
+        max-height: 180px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+        padding-right: 2px;
+    }
+    .pilot-list-wrap::-webkit-scrollbar { width: 4px; }
+    .pilot-list-wrap::-webkit-scrollbar-track { background: transparent; }
+    .pilot-list-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     .pilot-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
@@ -508,15 +544,17 @@
             <div class="slots-grid">
                 {% for slot in time_slots %}
                 {% set data = slot_data[slot] %}
-                {% set pct = (data.count / circuit.max_per_session * 100)|int %}
                 {% set is_past = (selected_date == today and slot <= now) or selected_date < today %}
+                {% set pct = 0 if is_past else (data.count / circuit.max_per_session * 100)|int %}
                 <div class="slot-card {% if is_past %}slot-past{% elif data.count >= circuit.max_per_session %}slot-full{% elif data.user_booked %}slot-booked{% endif %}"
                      {% if not is_past %}onclick="openSlotModal('{{ slot }}', {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, '{{ data.locked_kart_name or '' }}', '{{ data.locked_kart_group or '' }}', '{{ data.kart_mix_policy or 'all' }}')"{% endif %}>
-                    
-                    {% if data.user_booked %}
-                    <div class="slot-status-dot" style="background:var(--green);"></div>
-                    {% elif data.count >= circuit.max_per_session %}
-                    <div class="slot-status-dot" style="background:var(--red);"></div>
+
+                    {% if not is_past %}
+                        {% if data.user_booked %}
+                        <div class="slot-status-dot" style="background:var(--green);"></div>
+                        {% elif data.count >= circuit.max_per_session %}
+                        <div class="slot-status-dot" style="background:var(--red);"></div>
+                        {% endif %}
                     {% endif %}
 
                     <div class="slot-time">{{ slot }}</div>
@@ -680,13 +718,7 @@ function setLbTab(btn) {
         document.getElementById('slotModal').classList.add('active');
         document.getElementById('modalTitle').textContent = `Tanda ${slot}`;
 
-        let subtitle = `{{ circuit.name }} · ${selectedDate} · ${count}/${max} pilotos`;
-        if (lockedKartName && kartMixPolicy === 'separate') {
-            const groupLabel = lockedKartGroup === 'B' ? 'Biplaza/Junior' : 'Adulto';
-            subtitle += ` · <span style="color:var(--accent);font-weight:700;">🔒 Tanda ${groupLabel}</span>`;
-        } else if (lockedKartName) {
-            subtitle += ` · <span style="color:var(--accent);font-weight:700;">🏎 ${lockedKartName}</span>`;
-        }
+        const subtitle = `{{ circuit.name }} · ${selectedDate} · ${count}/${max} pilotos`;
         document.getElementById('modalSubtitle').innerHTML = subtitle;
 
         const body = document.getElementById('modalBody');
@@ -715,9 +747,26 @@ function setLbTab(btn) {
     }
 
 
+    // ── USER AGE ─────────────────────────────────────────────────────────────
+    {% if user and user.fecha_nacimiento %}
+    (function() {
+        const b = new Date('{{ user.fecha_nacimiento }}');
+        const t = new Date();
+        let a = t.getFullYear() - b.getFullYear();
+        if (t.getMonth() - b.getMonth() < 0 || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
+        window._userAge = a;
+    })();
+    {% else %}
+    window._userAge = null;
+    {% endif %}
+
     function getKartGroup(name) {
         const n = (name || '').toLowerCase();
         return (n.includes('biplaza') || n.includes('junior') || n.includes('infantil')) ? 'B' : 'A';
+    }
+
+    function _tooYoungForKart(kt) {
+        return window._userAge !== null && kt.minAge > 0 && window._userAge < kt.minAge;
     }
 
     function buildKartSelector(lockedKartId, lockedKartName) {
@@ -729,6 +778,12 @@ function setLbTab(btn) {
             const desc = kt.description || '';
             const cc = (kt.cc > 0 && !kt.name.toLowerCase().includes(kt.cc + 'cc') && !kt.name.toLowerCase().includes(kt.cc + ' cc')) ? kt.cc + 'cc' : (kt.cc === 0 && !kt.name.toLowerCase().includes('elec') ? 'Eléctrico' : '');
             const minAge = kt.minAge > 0 ? `Min. ${kt.minAge} años` : '';
+            const blocked = _tooYoungForKart(kt);
+            window._kartAgeBlocked = blocked;
+            const ageWarning = blocked ? `
+                <div style="margin-top:0.6rem;background:rgba(255,45,85,0.08);border:1px solid rgba(255,45,85,0.25);border-radius:6px;padding:0.6rem 0.75rem;font-size:0.78rem;color:var(--red);">
+                    ⚠️ No tienes la edad mínima para este kart (${kt.minAge} años). No puedes unirte a esta tanda.
+                </div>` : '';
             return `
             <div style="margin-bottom:1rem;">
                 <div style="
@@ -787,43 +842,42 @@ function setLbTab(btn) {
                 <div style="margin-top:0.45rem;font-size:0.73rem;color:var(--text-dim);padding-left:0.25rem;">
                     ${currentKartMixPolicy === 'separate' ? 'Tanda fijada por el primer piloto. Solo pueden unirse karts del mismo grupo.' : 'Todos los pilotos de esta tanda compiten con el mismo kart.'}
                 </div>
+                ${ageWarning}
             </div>`;
         }
 
         // Slot free — let user choose
         // If policy is 'separate' and there's a locked group, filter karts by group
         let availableKarts = kartTypes;
-        let groupWarning = '';
         if (currentKartMixPolicy === 'separate' && currentLockedKartGroup) {
             availableKarts = kartTypes.filter(kt => getKartGroup(kt.name) === currentLockedKartGroup);
-            const gLabel = currentLockedKartGroup === 'B' ? 'Biplaza/Junior' : 'Adulto';
-            groupWarning = `<div style="font-size:0.75rem;color:var(--accent);background:rgba(255,77,0,0.08);border:1px solid rgba(255,77,0,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
-                🔒 Tanda fijada como <strong>${gLabel}</strong>. Solo puedes reservar karts de este grupo.
-            </div>`;
-        } else if (currentKartMixPolicy === 'separate') {
-            groupWarning = `<div style="font-size:0.75rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
-                ⚠️ Eres el primero en esta tanda. El tipo de kart que elijas (adulto o biplaza/junior) fijará el grupo para los demás pilotos.
-            </div>`;
-        } else {
-            groupWarning = `<div style="font-size:0.75rem;color:var(--accent2);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;">
-                ⚠️ Eres el primero en esta tanda. Todos los tipos de kart son compatibles.
-            </div>`;
         }
 
         let opts = availableKarts.map(kt => {
             const priceStr = kt.pricePerSession > 0 ? ` · ${kt.pricePerSession.toFixed(2)}€` : '';
             const ccSuffix = (kt.cc > 0 && !kt.name.toLowerCase().includes(kt.cc + 'cc') && !kt.name.toLowerCase().includes(kt.cc + ' cc')) ? ' ' + kt.cc + 'cc' : (kt.cc === 0 && !kt.name.toLowerCase().includes('elec') ? ' Elec.' : '');
+            if (_tooYoungForKart(kt)) {
+                return `<option value="${kt.id}" disabled>${kt.name}${ccSuffix} — No disponible (min. ${kt.minAge} años)</option>`;
+            }
             return `<option value="${kt.id}">${kt.name}${ccSuffix}${priceStr}</option>`;
         }).join('');
 
-        if (!opts) {
-            return `<div style="color:var(--red);font-size:0.85rem;padding:0.75rem;">No hay karts disponibles para esta tanda.</div>`;
+        const allBlocked = availableKarts.length > 0 && availableKarts.every(kt => _tooYoungForKart(kt));
+        window._kartAgeBlocked = allBlocked;
+
+        if (!opts || allBlocked) {
+            const minRequired = availableKarts.length > 0 ? Math.min(...availableKarts.map(k => k.minAge).filter(a => a > 0)) : 0;
+            return `<div style="background:rgba(255,45,85,0.08);border:1px solid rgba(255,45,85,0.25);border-radius:6px;padding:0.75rem 1rem;font-size:0.83rem;color:var(--red);">
+                ⚠️ No tienes la edad mínima para ningún kart disponible en esta tanda${minRequired ? ' (mín. ' + minRequired + ' años)' : ''}.
+            </div>`;
         }
+
+        // Select the first non-disabled option by default
+        const firstAvailableId = availableKarts.find(kt => !_tooYoungForKart(kt))?.id;
 
         return `
         <div style="margin-bottom:1rem;">
             <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.4rem;">Elige el tipo de kart</label>
-            ${groupWarning}
             <select name="kart_type_id" id="kartSelect" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:0.7rem 1rem;" onchange="updateKartInfo(this)">
                 ${opts}
             </select>
@@ -892,6 +946,10 @@ function setLbTab(btn) {
 
     function addToCart(slot, kartTypeId, numPilots) {
         const kt = kartTypes.find(k => k.id === kartTypeId);
+        if (kt && _tooYoungForKart(kt)) {
+            alert(`No puedes reservar este kart. Edad mínima: ${kt.minAge} años.`);
+            return;
+        }
         const price = getKartPrice(kt);
         const name = kt ? kt.name : 'Kart';
         // Remove if same slot already in cart
@@ -927,21 +985,21 @@ function setLbTab(btn) {
 
         if (pilots.length === 0) {
             body.innerHTML = `
-                <div class="modal-empty">
-                    <div class="empty-icon">🏎️</div>
-                    <div style="font-weight:600;margin-bottom:0.3rem;">Tanda sin pilotos</div>
-                    <div style="font-size:0.82rem;">Sé el primero y elige el tipo de kart para esta tanda.</div>
+                <div class="modal-empty" style="padding:0.75rem;">
+                    <div class="empty-icon" style="font-size:1.5rem;margin-bottom:0.3rem;">🏎️</div>
+                    <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.15rem;">Tanda sin pilotos</div>
+                    <div style="font-size:0.78rem;">Sé el primero y elige el tipo de kart para esta tanda.</div>
                 </div>`;
         } else {
             const items = pilots.map(p => {
                 return `
                 <div class="pilot-item">
                     <div class="pilot-avatar">
-                        ${p.avatar_initial || p.full_name[0].toUpperCase()}
+                        ${p.avatar_initial || p.username[0].toUpperCase()}
                     </div>
                     <div>
-                        <div class="pilot-name">${p.full_name}</div>
-                        <div class="pilot-username">@${p.username} · ${p.races_completed} carreras</div>
+                        <div class="pilot-name" style="color:var(--accent);">@${p.username}</div>
+                        ${p.kart_name ? `<div class="pilot-username" style="color:#fff;">${p.kart_name}</div>` : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -952,7 +1010,7 @@ function setLbTab(btn) {
                     <span style="font-size:0.82rem;color:var(--text-muted);">${count} piloto${count!==1?'s':''} registrado${count!==1?'s':''}</span>
                     <span style="font-size:0.82rem;color:var(--text-muted);">${available} plaza${available!==1?'s':''} libre${available!==1?'s':''}</span>
                 </div>
-                <div class="pilot-list">${items}</div>`;
+                <div class="pilot-list-wrap"><div class="pilot-list">${items}</div></div>`;
         }
 
         // Footer
@@ -971,13 +1029,17 @@ function setLbTab(btn) {
         } else {
             const kartSelector = buildKartSelector(lockedKartId, lockedKartName);
             const alreadyInCart = cart.some(item => item.slot === slot);
+            const ageBlocked = window._kartAgeBlocked;
             footer.innerHTML = `
                 <div id="modalKartWrap">
                     ${kartSelector}
                 </div>
-                <button onclick="handleSelectTanda('${slot}', ${lockedKartId || 'null'})" class="btn btn-primary btn-full" style="margin-top:0.5rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;" id="btnSelectTanda">
-                    ${alreadyInCart ? '✓ Ya añadida — volver a seleccionar' : 'Seleccionar tanda'}
-                </button>`;
+                ${ageBlocked
+                    ? ''
+                    : `<button onclick="handleSelectTanda('${slot}', ${lockedKartId || 'null'})" class="btn btn-primary btn-full" style="margin-top:0.5rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;" id="btnSelectTanda">
+                        ${alreadyInCart ? '✓ Ya añadida — volver a seleccionar' : 'Seleccionar tanda'}
+                       </button>`
+                }`;
             const sel = document.getElementById('kartSelect');
             if (sel) updateKartInfo(sel);
         }
@@ -1008,18 +1070,18 @@ function setLbTab(btn) {
 
     // Profile completion check before booking
     {% if user %}
-    const missingDni = {{ 'true' if not user.dni else 'false' }};
-    const missingFecha = {{ 'true' if not user.fecha_nacimiento else 'false' }};
+    let _profileComplete = {{ 'false' if (not user.dni or not user.fecha_nacimiento) else 'true' }};
 
-    if (missingDni || missingFecha) {
-        const cartForm = document.getElementById('cartForm');
-        if (cartForm) {
-            cartForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                document.getElementById('profileCompleteModal').style.display = 'flex';
-            });
+    function _profileSubmitGuard(e) {
+        if (!_profileComplete) {
+            e.preventDefault();
+            closePaySheet();
+            document.getElementById('profileCompleteModal').style.display = 'flex';
         }
     }
+
+    const _cartFormEl = document.getElementById('cartForm');
+    if (_cartFormEl) _cartFormEl.addEventListener('submit', _profileSubmitGuard);
 
     function closeProfileModal() {
         document.getElementById('profileCompleteModal').style.display = 'none';
@@ -1039,8 +1101,9 @@ function setLbTab(btn) {
         const res = await fetch('/api/complete-profile', { method: 'POST', body: data });
         const json = await res.json();
         if (json.ok) {
+            _profileComplete = true;
             closeProfileModal();
-            document.getElementById('cartForm').submit();
+            openPaySheet();
         } else {
             btn.disabled = false;
             btn.textContent = 'Guardar y reservar';
@@ -1079,4 +1142,446 @@ function setLbTab(btn) {
     </div>
 </div>
 {% endif %}
+
+<!-- ══ PAYMENT BOTTOM SHEET ══════════════════════════════ -->
+<style>
+.pay-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: flex; align-items: flex-end; justify-content: center;
+}
+.pay-backdrop.open { opacity: 1; pointer-events: all; }
+
+.pay-panel {
+    width: 100%; max-width: 560px;
+    background: var(--bg2);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -8px 50px rgba(0,0,0,0.6);
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    height: 92vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+.pay-backdrop.open .pay-panel { transform: translateY(0); }
+
+.pay-handle {
+    width: 40px; height: 4px; background: rgba(255,255,255,0.15);
+    border-radius: 2px; margin: 12px auto 0; flex-shrink: 0;
+}
+
+.pay-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.pay-header-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.04em; }
+.pay-close {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0;
+}
+.pay-close:hover { background: rgba(255,255,255,0.18); }
+
+.pay-body { flex: 1; overflow-y: auto; padding: 1.5rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+.pay-step { display: none; }
+.pay-step.active { display: block; }
+
+/* Booking card */
+.pay-booking-card {
+    background: var(--bg3); border: 1px solid rgba(255,77,0,0.3);
+    border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;
+}
+.pay-slot-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+}
+.pay-slot-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+/* Payment option cards */
+.pay-option {
+    border: 1.5px solid rgba(255,77,0,0.2); border-radius: 14px;
+    padding: 1rem 1.1rem; margin-bottom: 0.65rem;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    background: var(--bg3);
+}
+.pay-option.selected { border-color: var(--accent); background: rgba(255,77,0,0.07); }
+.pay-option-header { display: flex; align-items: center; gap: 0.75rem; }
+.pay-option-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(255,77,0,0.4); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
+}
+.pay-option.selected .pay-option-radio { border-color: var(--accent); }
+.pay-option-radio-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity 0.15s;
+}
+.pay-option.selected .pay-option-radio-dot { opacity: 1; }
+.pay-option-title { font-weight: 700; font-size: 0.9rem; flex: 1; }
+.pay-option-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--accent); }
+.pay-option-desc { font-size: 0.77rem; color: var(--text-muted); margin-top: 0.4rem; padding-left: 1.65rem; line-height: 1.5; }
+
+/* Price rows */
+.pay-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.pay-row:last-child { border-bottom: none; }
+.pay-row-label { color: var(--text-muted); }
+.pay-row-val { font-weight: 600; }
+.pay-total-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0.9rem 0 0; }
+.pay-total-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.pay-total-amount { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--accent); line-height: 1; }
+
+/* Policy card */
+.pay-policy-card {
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+    padding: 0.9rem 1rem; margin-top: 1.25rem;
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    font-size: 0.82rem; color: var(--text-muted); cursor: pointer;
+    transition: border-color 0.15s;
+}
+.pay-policy-card:hover { border-color: rgba(255,77,0,0.3); }
+.pay-policy-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.05rem; }
+.pay-policy-link { color: var(--accent); font-weight: 600; text-decoration: none; font-size: 0.82rem; }
+
+/* Method button */
+.pay-method-btn {
+    width: 100%; background: var(--bg3); border: 1.5px solid rgba(255,77,0,0.2);
+    border-radius: 14px; padding: 1rem 1.1rem;
+    display: flex; align-items: center; gap: 0.9rem;
+    cursor: pointer; margin-bottom: 0.6rem;
+    transition: border-color 0.15s, background 0.15s; color: var(--text);
+}
+.pay-method-btn:hover:not(:disabled) { border-color: rgba(255,77,0,0.5); background: rgba(255,77,0,0.05); }
+.pay-method-btn.selected { border-color: var(--accent); background: rgba(255,77,0,0.08); }
+.pay-method-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.pay-method-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.pay-method-name { font-weight: 700; font-size: 0.92rem; flex: 1; text-align: left; }
+.pay-method-sub { font-size: 0.74rem; color: var(--text-muted); margin-top: 0.15rem; }
+.pay-prox { font-family: 'Barlow Condensed', sans-serif; font-size: 0.63rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(255,77,0,0.12); color: var(--accent); border: 1px solid rgba(255,77,0,0.3); padding: 0.18rem 0.55rem; border-radius: 4px; flex-shrink: 0; }
+
+/* Footer */
+.pay-footer { padding: 1rem 1.5rem 1.75rem; flex-shrink: 0; border-top: 1px solid var(--border); background: var(--bg2); }
+.pay-btn-main {
+    width: 100%; padding: 1rem;
+    background: var(--accent); color: #fff; border: none; border-radius: 14px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.08em;
+    cursor: pointer; box-shadow: 0 4px 22px rgba(255,77,0,0.4);
+    transition: background 0.15s, box-shadow 0.15s;
+}
+.pay-btn-main:hover { background: #e64400; box-shadow: 0 6px 28px rgba(255,77,0,0.5); }
+
+.pay-section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-muted); margin: 1.25rem 0 0.65rem; }
+</style>
+
+<div class="pay-backdrop" id="payBackdrop">
+    <div class="pay-panel">
+        <div class="pay-handle"></div>
+
+        <!-- Header -->
+        <div class="pay-header">
+            <div class="pay-header-title" id="payTitle">Revisar reserva</div>
+            <button class="pay-close" onclick="closePaySheet()">✕</button>
+        </div>
+
+        <div class="pay-body">
+
+            <!-- ── PASO 1: Revisar ── -->
+            <div class="pay-step active" id="payStep1">
+
+                <!-- Detalles de la reserva -->
+                <div class="pay-booking-card" id="payBookingCard"></div>
+
+                <!-- Opciones de pago -->
+                <div class="pay-section-label">¿Cómo quieres pagar?</div>
+
+                <div class="pay-option selected" id="payOptPartial" onclick="selectPayOption('partial')">
+                    <div class="pay-option-header">
+                        <div class="pay-option-radio"><div class="pay-option-radio-dot"></div></div>
+                        <div class="pay-option-title">Reserva ahora, paga después</div>
+                        <div class="pay-option-price" id="payOptPartialPrice">—</div>
+                    </div>
+                    <div class="pay-option-desc">Paga <strong style="color:var(--text);">1€ por tanda</strong> ahora para asegurar tu plaza. El resto lo pagas 24–48h antes de la tanda (+0,50€ por tanda de gestión).</div>
+                </div>
+
+                <div class="pay-option" id="payOptFull" onclick="selectPayOption('full')">
+                    <div class="pay-option-header">
+                        <div class="pay-option-radio"><div class="pay-option-radio-dot"></div></div>
+                        <div class="pay-option-title">Pago completo ahora</div>
+                        <div class="pay-option-price" id="payOptFullPrice">—</div>
+                    </div>
+                    <div class="pay-option-desc">Paga el total ahora sin cargos adicionales. Sin sorpresas.</div>
+                </div>
+
+                <!-- Desglose -->
+                <div style="margin-top:1.25rem;">
+                    <div class="pay-row"><span class="pay-row-label">Precio por tanda</span><span class="pay-row-val" id="payBasePrice">—</span></div>
+                    <div class="pay-row" id="paySurchargeRow" style="display:none;"><span class="pay-row-label">Cargo de gestión (+0,50€/tanda)</span><span class="pay-row-val" id="paySurcharge">—</span></div>
+                    <div class="pay-total-row">
+                        <div>
+                            <div class="pay-total-label">Pagas ahora</div>
+                            <div style="font-size:0.7rem;color:var(--text-dim);" id="payNowSub">1€ × tandas seleccionadas</div>
+                        </div>
+                        <div class="pay-total-amount" id="payNowTotal">—</div>
+                    </div>
+                </div>
+
+                <!-- Política de cancelación -->
+                <div class="pay-policy-card">
+                    <div class="pay-policy-icon">📄</div>
+                    <div>
+                        <div style="font-weight:600;color:var(--text);margin-bottom:0.2rem;">Política de Cancelación de Reservas</div>
+                        <div>Consulta las condiciones de cancelación antes de confirmar. <a class="pay-policy-link" href="#">Leer más →</a></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── PASO 2: Método de pago ── -->
+            <div class="pay-step" id="payStep2">
+
+                <!-- Resumen compacto -->
+                <div class="pay-booking-card" id="payStep2Summary"></div>
+
+                <!-- Desglose final -->
+                <div class="pay-row"><span class="pay-row-label">Precio por tanda</span><span class="pay-row-val" id="payBasePrice2">—</span></div>
+                <div class="pay-row" id="paySurchargeRow2" style="display:none;"><span class="pay-row-label">Cargo de gestión</span><span class="pay-row-val" id="paySurcharge2">—</span></div>
+                <div class="pay-total-row" style="margin-bottom:1.5rem;">
+                    <div>
+                        <div class="pay-total-label">Pagas ahora</div>
+                        <div style="font-size:0.7rem;color:var(--text-dim);" id="payNowSub2"></div>
+                    </div>
+                    <div class="pay-total-amount" id="payNowTotal2">—</div>
+                </div>
+
+                <!-- Método de pago -->
+                <div class="pay-section-label">Método de pago</div>
+
+                <button class="pay-method-btn selected" id="selectedMethodBtn" onclick="showPayStep(3)">
+                    <div class="pay-method-icon" id="selectedMethodIcon">🏟️</div>
+                    <div style="flex:1;text-align:left;">
+                        <div class="pay-method-name" id="selectedMethodName">Pagar en circuito</div>
+                        <div class="pay-method-sub" id="selectedMethodSub">Efectivo o tarjeta al llegar</div>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+
+                <div style="font-size:0.73rem;color:var(--text-dim);text-align:center;margin-top:1rem;line-height:1.5;">
+                    Al confirmar aceptas la <a class="pay-policy-link" href="#">Política de Cancelación</a> de KARTNATION
+                </div>
+            </div>
+
+            <!-- ── PASO 3: Elegir método ── -->
+            <div class="pay-step" id="payStep3">
+
+                <div class="pay-section-label" style="margin-top:0;">Disponible ahora</div>
+
+                <button class="pay-method-btn" onclick="selectMethod('circuit','🏟️','Pagar en circuito','Efectivo o tarjeta al llegar')">
+                    <div class="pay-method-icon">🏟️</div>
+                    <div style="flex:1;text-align:left;">
+                        <div class="pay-method-name">Pagar en circuito</div>
+                        <div class="pay-method-sub">Efectivo o tarjeta al llegar</div>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+
+                <div class="pay-section-label">Próximamente</div>
+
+                <button class="pay-method-btn" disabled>
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                    </div>
+                    <div style="flex:1;text-align:left;">
+                        <div class="pay-method-name">Tarjeta de crédito / débito</div>
+                        <div class="pay-method-sub">Visa, Mastercard, Amex</div>
+                    </div>
+                    <span class="pay-prox">Próximamente</span>
+                </button>
+
+                <button class="pay-method-btn" style="margin-top:0;" disabled>
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    </div>
+                    <div style="flex:1;text-align:left;">
+                        <div class="pay-method-name">Apple Pay</div>
+                        <div class="pay-method-sub">Pago rápido con Face ID</div>
+                    </div>
+                    <span class="pay-prox">Próximamente</span>
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="pay-footer">
+            <button class="pay-btn-main" id="payMainBtn" onclick="payAction()">
+                Continuar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const BASE_PRICE_PAY = {{ pitlane_price if pitlane_price else circuit.price_per_session }};
+let _payOption = 'partial'; // 'partial' | 'full'
+let _payStep = 1;
+let _payMethodId = 'circuit';
+
+function _payNowAmount() {
+    const n = cart.length;
+    if (_payOption === 'partial') return n * 1;
+    return cartTotal();
+}
+
+function _paySurchargeAmount() {
+    return _payOption === 'partial' ? cart.length * 0.5 : 0;
+}
+
+function selectPayOption(opt) {
+    _payOption = opt;
+    document.getElementById('payOptPartial').classList.toggle('selected', opt === 'partial');
+    document.getElementById('payOptFull').classList.toggle('selected', opt === 'full');
+    _refreshStep1();
+    _refreshStep2();
+}
+
+function _refreshStep1() {
+    const n = cart.length;
+    const base = BASE_PRICE_PAY;
+    const nowAmt = _payNowAmount();
+    const surcharge = _paySurchargeAmount();
+
+    document.getElementById('payOptPartialPrice').textContent = (n * 1).toFixed(2) + '€';
+    document.getElementById('payOptFullPrice').textContent = cartTotal().toFixed(2) + '€';
+    document.getElementById('payBasePrice').textContent = base.toFixed(2) + '€';
+    document.getElementById('payNowTotal').textContent = nowAmt.toFixed(2) + '€';
+
+    const surchargeRow = document.getElementById('paySurchargeRow');
+    if (_payOption === 'partial') {
+        surchargeRow.style.display = 'flex';
+        document.getElementById('paySurcharge').textContent = surcharge.toFixed(2) + '€';
+        document.getElementById('payNowSub').textContent = `1€ × ${n} tanda${n!==1?'s':''}`;
+    } else {
+        surchargeRow.style.display = 'none';
+        document.getElementById('payNowSub').textContent = `Pago único completo`;
+    }
+    document.getElementById('payMainBtn').textContent = `Continuar pagando ${nowAmt.toFixed(2)}€`;
+}
+
+function _refreshStep2() {
+    const nowAmt = _payNowAmount();
+    const surcharge = _paySurchargeAmount();
+    const n = cart.length;
+
+    document.getElementById('payBasePrice2').textContent = BASE_PRICE_PAY.toFixed(2) + '€';
+    document.getElementById('payNowTotal2').textContent = nowAmt.toFixed(2) + '€';
+    document.getElementById('payNowSub2').textContent = _payOption === 'partial' ? `1€ × ${n} tanda${n!==1?'s':''}` : 'Pago completo';
+
+    const row2 = document.getElementById('paySurchargeRow2');
+    if (_payOption === 'partial') {
+        row2.style.display = 'flex';
+        document.getElementById('paySurcharge2').textContent = surcharge.toFixed(2) + '€';
+    } else {
+        row2.style.display = 'none';
+    }
+}
+
+function openPaySheet() {
+    if (cart.length === 0) return;
+    const circuitName = '{{ circuit.name }}';
+    const date = selectedDate;
+
+    // Build slot rows
+    const slotRows = cart.map(item => `
+        <div class="pay-slot-row">
+            <div>
+                <span style="font-weight:700;color:var(--accent);">${item.slot}</span>
+                <span style="color:var(--text-muted);margin-left:0.5rem;font-size:0.8rem;">${item.kartTypeName}</span>
+            </div>
+            <span style="font-weight:600;">${item.pricePerSession.toFixed(2)}€</span>
+        </div>`).join('');
+
+    const cardHTML = `
+        <div style="font-weight:700;font-size:1rem;margin-bottom:0.1rem;">${circuitName}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.85rem;">📅 ${date} &nbsp;·&nbsp; ${cart.length} tanda${cart.length!==1?'s':''}</div>
+        <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:0.65rem;">${slotRows}</div>`;
+
+    document.getElementById('payBookingCard').innerHTML = cardHTML;
+    document.getElementById('payStep2Summary').innerHTML = `
+        <div style="font-weight:700;margin-bottom:0.1rem;">${circuitName}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">📅 ${date} &nbsp;·&nbsp; ${cart.length} tanda${cart.length!==1?'s':''}</div>`;
+
+    _payOption = 'partial';
+    selectPayOption('partial');
+    showPayStep(1);
+    document.getElementById('payBackdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePaySheet() {
+    document.getElementById('payBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showPayStep(n) {
+    _payStep = n;
+    document.querySelectorAll('.pay-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('payStep' + n).classList.add('active');
+    const nowAmt = _payNowAmount().toFixed(2);
+    if (n === 1) {
+        document.getElementById('payTitle').textContent = 'Revisar reserva';
+        document.getElementById('payMainBtn').textContent = `Continuar pagando ${nowAmt}€`;
+    } else if (n === 2) {
+        _refreshStep2();
+        document.getElementById('payTitle').textContent = 'Método de pago';
+        document.getElementById('payMainBtn').textContent = `Confirmar · Pagar ${nowAmt}€`;
+    } else if (n === 3) {
+        document.getElementById('payTitle').textContent = 'Elige cómo pagar';
+        document.getElementById('payMainBtn').style.display = 'none';
+    }
+    if (n !== 3) document.getElementById('payMainBtn').style.display = '';
+}
+
+function payAction() {
+    if (_payStep === 1) {
+        showPayStep(2);
+    } else if (_payStep === 2) {
+        closePaySheet();
+        document.getElementById('cartForm').submit();
+    }
+}
+
+function selectMethod(id, icon, name, sub) {
+    _payMethodId = id;
+    document.getElementById('selectedMethodIcon').textContent = icon;
+    document.getElementById('selectedMethodName').textContent = name;
+    document.getElementById('selectedMethodSub').textContent = sub;
+    showPayStep(2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const cartForm = document.getElementById('cartForm');
+    if (cartForm) {
+        const submitBtn = cartForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                {% if user %}
+                e.preventDefault();
+                openPaySheet();
+                {% endif %}
+            });
+        }
+    }
+});
+
+document.getElementById('payBackdrop').addEventListener('click', function(e) {
+    if (e.target === this) closePaySheet();
+});
+</script>
+
 {% endblock %}
