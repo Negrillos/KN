@@ -547,7 +547,7 @@
                 {% set is_past = (selected_date == today and slot <= now) or selected_date < today %}
                 {% set pct = 0 if is_past else (data.count / circuit.max_per_session * 100)|int %}
                 <div class="slot-card {% if is_past %}slot-past{% elif data.count >= circuit.max_per_session %}slot-full{% elif data.user_booked %}slot-booked{% endif %}"
-                     {% if not is_past %}onclick="openSlotModal('{{ slot }}', {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, '{{ data.locked_kart_name or '' }}', '{{ data.locked_kart_group or '' }}', '{{ data.kart_mix_policy or 'all' }}')"{% endif %}>
+                     {% if not is_past %}onclick='openSlotModal({{ slot|tojson }}, {{ data.count }}, {{ circuit.max_per_session }}, {{ data.user_booked|lower }}, {{ data.locked_kart_id if data.locked_kart_id else 'null' }}, {{ (data.locked_kart_name or "")|tojson }}, {{ (data.locked_kart_group or "")|tojson }}, {{ (data.kart_mix_policy or "all")|tojson }})'{% endif %}>
 
                     {% if not is_past %}
                         {% if data.user_booked %}
@@ -692,7 +692,8 @@ function setLbTab(btn) {
 
 <script>
     const circuitId = {{ circuit.id }};
-    const selectedDate = '{{ selected_date }}';
+    const circuitNameSafe = {{ circuit.name|tojson }};
+    const selectedDate = {{ selected_date|tojson }};
     const circuitColor = 'var(--accent)';
     const maxPerSession = {{ circuit.max_per_session }};
     const isLoggedIn = {{ 'true' if session.get('user_id') else 'false' }};
@@ -700,7 +701,7 @@ function setLbTab(btn) {
     // Kart types data from server
     const kartTypes = [
         {% for kt in kart_types %}
-        { id: {{ kt.id }}, name: "{{ kt.name }}", cc: {{ kt.engine_cc or 0 }}, description: "{{ kt.description or '' }}", minAge: {{ kt.min_age or 0 }}, pricePerSession: {{ kt.price_per_session if kt.price_per_session else 0.0 }} },
+        { id: {{ kt.id }}, name: {{ kt.name|tojson }}, cc: {{ kt.engine_cc or 0 }}, description: {{ (kt.description or '')|tojson }}, minAge: {{ kt.min_age or 0 }}, pricePerSession: {{ kt.price_per_session if kt.price_per_session else 0.0 }} },
         {% endfor %}
     ];
 
@@ -718,7 +719,7 @@ function setLbTab(btn) {
         document.getElementById('slotModal').classList.add('active');
         document.getElementById('modalTitle').textContent = `Tanda ${slot}`;
 
-        const subtitle = `{{ circuit.name }} · ${selectedDate} · ${count}/${max} pilotos`;
+        const subtitle = `${circuitNameSafe} · ${selectedDate} · ${count}/${max} pilotos`;
         document.getElementById('modalSubtitle').innerHTML = subtitle;
 
         const body = document.getElementById('modalBody');
@@ -750,7 +751,7 @@ function setLbTab(btn) {
     // ── USER AGE ─────────────────────────────────────────────────────────────
     {% if user and user.fecha_nacimiento %}
     (function() {
-        const b = new Date('{{ user.fecha_nacimiento }}');
+        const b = new Date({{ user.fecha_nacimiento|tojson }});
         const t = new Date();
         let a = t.getFullYear() - b.getFullYear();
         if (t.getMonth() - b.getMonth() < 0 || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
@@ -1493,7 +1494,7 @@ function _refreshStep2() {
 
 function openPaySheet() {
     if (cart.length === 0) return;
-    const circuitName = '{{ circuit.name }}';
+    const circuitName = circuitNameSafe;
     const date = selectedDate;
 
     // Build slot rows

@@ -10,7 +10,7 @@ body { overflow: hidden; }
 /* ── Layout ─────────────────────────────────────────────── */
 .pf-wrap {
     display: flex;
-    height: calc(100vh - 64px);
+    height: calc(100vh - 60px);
     overflow: hidden;
     background: var(--bg);
 }
@@ -326,10 +326,12 @@ body { overflow: hidden; }
 }
 
 @media (max-width: 900px) {
-    .pf-sidebar { width: 100%; min-width: unset; height: auto; position: relative; top: 0; }
-    .pf-wrap { flex-direction: column; }
-    .pf-body { flex-direction: column; }
-    .pf-info-panel { width: 100%; min-width: unset; height: auto; position: relative; top: 0; border-left: none; border-top: 1px solid var(--border); }
+    body { overflow: auto; }
+    .pf-wrap { flex-direction: column; height: auto; overflow: visible; }
+    .pf-sidebar { width: 100%; min-width: unset; height: auto; position: relative; top: 0; overflow: visible; }
+    .pf-body { flex-direction: column; height: auto; overflow: visible; }
+    .pf-content { height: auto; overflow: visible; padding: 1.5rem 1.25rem; }
+    .pf-info-panel { width: 100%; min-width: unset; height: auto; position: relative; top: 0; border-left: none; border-top: 1px solid var(--border); overflow: visible; }
     .pf-nav { flex-direction: row; flex-wrap: wrap; }
     .pf-nav-item { width: auto; flex: 1; min-width: 100px; justify-content: center; }
 }

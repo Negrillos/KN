@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'kartnation_secret_key_2024')
+app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 DB_PATH = 'kartodromo.db'
 
 oauth = OAuth(app)
@@ -212,9 +212,11 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
+    # Backfill `type` column for tickets tables created before it was added
     try:
         c.execute("ALTER TABLE tickets ADD COLUMN type TEXT DEFAULT 'soporte'")
-    except: pass
+    except sqlite3.OperationalError:
+        pass
     # Migrate old status names
     c.execute("UPDATE tickets SET status='por_atender' WHERE status='abierto'")
     c.execute("UPDATE tickets SET status='en_progreso' WHERE status='en_revision'")
@@ -271,7 +273,6 @@ def init_db():
         'Karting Calafat': (40.9265, 0.8374),
         'Karting Coma-Ruga': (41.1667, 1.5500),
         'Karting Vendrell': (41.2167, 1.5500),
-        'Karting Calafat': (40.9265, 0.8374),
         'Gene Karting': (41.3043, 2.0108),
         'Indoor Karting Barcelona': (41.3799, 2.0435),
         'Karting Cardedeu': (41.6406, 2.3609),
@@ -281,6 +282,10 @@ def init_db():
     }
     for name, (lat, lng) in circuit_coords.items():
         c.execute('UPDATE circuits SET lat=?, lng=? WHERE name=?', (lat, lng, name))
+
+    # Backfill emojis for circuits seeded with empty emoji
+    for name, emoji in [('Karting Coma-Ruga', '🏖'), ('Karting Vendrell', '🚀'), ('Karting Calafat', '🌊')]:
+        c.execute("UPDATE circuits SET emoji=? WHERE name=? AND (emoji='' OR emoji IS NULL)", (emoji, name))
 
     # New user fields — safe to run on existing DBs
     new_user_cols = [
@@ -326,15 +331,15 @@ def init_db():
             ('Karting Coma-Ruga', 'Coma-ruga', 'Ctra. Nal. 340, Km. 1188, 43880 Coma-ruga, Tarragona',
              'El circuito donde empezaron Alex y Marc Marquez',
              'Karting outdoor de 850 metros con 40.000 m2 de instalaciones y 250 plazas de parking. A 20 minutos de Tarragona y 45 de Barcelona, a 300 metros de la playa de Coma-ruga. Circuito adultos técnico con Super-kart SODI RT-10 400cc, únicos en la provincia. Mas de 30 años de historia con bar, terraza y zona de barbacoa.',
-             850, 80, 'Outdoor', 'Intermedio', 12, 20.00, '#FF4D00', '', 'https://kartingcomaruga.com'),
+             850, 80, 'Outdoor', 'Intermedio', 12, 20.00, '#FF4D00', '🏖', 'https://kartingcomaruga.com'),
             ('Karting Vendrell', 'El Vendrell', 'Crta. N-340, Km. 1189, 43700 El Vendrell, Tarragona',
              'Uno de los mejores circuitos de karts de Europa',
              'Circuito outdoor de 1.275 metros con 8 curvas a derechas y 6 a izquierdas. Trazado técnico de nivel internacional donde han rodado Fernando Alonso, Pedro de la Rosa y Carlos Sainz. Karts GTMax Rotax 125cc de 30 cv que alcanzan 95 km/h. También paintball, laser tag y barbacoa. A 35 minutos de Barcelona.',
-             1275, 95, 'Outdoor', 'Avanzado', 14, 25.00, '#FF4D00', '', 'https://kartingvendrell.com'),
+             1275, 95, 'Outdoor', 'Avanzado', 14, 25.00, '#FF4D00', '🚀', 'https://kartingvendrell.com'),
             ('Karting Calafat', "L'Ametlla de Mar", 'Urb. San Jorge S Autop, 43860 Calafat, Tarragona',
              'Circuito técnico outdoor a 300 metros de la playa en el mítico Circuit de Calafat',
              'Circuito outdoor de 700 metros con 6 curvas a derechas y 3 a izquierdas, dos chicanes y 7-10 metros de anchura. Inaugurado en 2022 en las instalaciones del legendario Circuit de Calafat. Cronometraje profesional, podium y medallas. Parking propio, terraza con bebidas y snacks, zona de barbacoa, briefing previo y zona ludica con piscina y parque infantil. A 48 km de Tarragona y muy cerca de la playa.',
-             700, 80, 'Outdoor', 'Intermedio', 12, 18.00, '#FF4D00', '', 'https://karting.circuitcalafat.com'),
+             700, 80, 'Outdoor', 'Intermedio', 12, 18.00, '#FF4D00', '🌊', 'https://karting.circuitcalafat.com'),
             ('Circuit d\'Osona Karting', 'Vic', 'Carrer Cabreres, 2, 08500 Vic',
              'Circuito de referencia en el corazon de Cataluña',
              'Pista outdoor de 940 metros de longitud y 8 metros de ancho ubicada en Vic, a 45 minutos de Barcelona. Trazado muy versátil con innumerables variantes que lo hacen único. Sede habitual de competiciones oficiales y campeónatos regionales. Dispone de escuela de karts y talleres de carreras. Anualmente acoge las legendarias 24 Horas de Osona. Ideal para pilotos que buscan mejorar su nivel.',
