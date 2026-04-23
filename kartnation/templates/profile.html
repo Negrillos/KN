@@ -167,13 +167,8 @@ body { overflow: hidden; }
     overflow-y: auto;
 }
 
-.pf-section { display: none; opacity: 0; }
-.pf-section.active { display: block; animation: pfFadeIn 0.25s ease forwards; }
-
-@keyframes pfFadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+.pf-section { display: none; }
+.pf-section.active { display: block; }
 
 .pf-page-title {
     font-family: 'Bebas Neue', sans-serif;
@@ -337,9 +332,8 @@ body { overflow: hidden; }
     .pf-body { flex-direction: column; height: auto; overflow: visible; }
     .pf-content { height: auto; overflow: visible; padding: 1.5rem 1.25rem; }
     .pf-info-panel { width: 100%; min-width: unset; height: auto; position: relative; top: 0; border-left: none; border-top: 1px solid var(--border); overflow: visible; }
-    .pf-nav { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 0.15rem; -webkit-overflow-scrolling: touch; }
-    .pf-nav-item { flex: 0 0 auto; min-width: 90px; justify-content: center; padding: 0.65rem 0.9rem; }
-    .pf-nav-icon { display: none; }
+    .pf-nav { flex-direction: row; flex-wrap: wrap; }
+    .pf-nav-item { width: auto; flex: 1; min-width: 100px; justify-content: center; }
 }
 </style>
 {% endblock %}
@@ -651,11 +645,7 @@ function pfShowTab(name, btn) {
     document.querySelectorAll('.pf-nav-item').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.pf-section').forEach(s => s.classList.remove('active'));
     btn.classList.add('active');
-    const section = document.getElementById('pf-tab-' + name);
-    section.classList.add('active');
-    // Scroll section into view on mobile
-    const content = document.querySelector('.pf-content');
-    if (content) content.scrollTop = 0;
+    document.getElementById('pf-tab-' + name).classList.add('active');
 }
 </script>
 {% endblock %}

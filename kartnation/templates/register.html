@@ -4,129 +4,36 @@
 {% block head %}
 <style>
     .auth-wrapper {
-        min-height: calc(100vh - 60px);
+        min-height: calc(100vh - 120px);
         display: flex; align-items: center; justify-content: center;
         padding: 3rem 1rem;
     }
-
-    .auth-wrapper::before {
-        content: '';
-        position: fixed;
-        top: -200px; right: -200px;
-        width: 700px; height: 700px;
-        background: radial-gradient(circle, rgba(255,77,0,0.06) 0%, transparent 65%);
-        pointer-events: none;
-    }
-
     .auth-card {
         width: 100%; max-width: 500px;
         background: var(--bg2); border: 1px solid var(--border);
         border-radius: var(--radius-lg); overflow: hidden;
-        position: relative; z-index: 1;
-        box-shadow: 0 24px 80px rgba(0,0,0,0.6);
     }
-
-    .auth-top-bar {
-        height: 4px;
-        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-    }
-
+    .auth-top-bar { height: 4px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); }
     .auth-body { padding: 2.5rem; }
-
-    .auth-logo {
-        width: 56px; height: 56px;
-        background: rgba(255,77,0,0.12);
-        border: 1px solid rgba(255,77,0,0.2);
-        border-radius: var(--radius-lg);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.75rem; margin: 0 auto 1.5rem;
-    }
-
     .auth-eyebrow {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 0.75rem; font-weight: 600;
-        letter-spacing: 0.18em; text-transform: uppercase;
-        color: var(--accent); margin-bottom: 0.4rem;
+        font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
+        font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 0.5rem;
     }
-
-    .auth-title {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.4rem; letter-spacing: 0.03em; margin-bottom: 0.4rem;
-    }
-
-    .auth-subtitle {
-        font-size: 0.875rem; color: var(--text-muted);
-        margin-bottom: 2rem; line-height: 1.6;
-    }
-
+    .auth-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+    .auth-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .required-star { color: var(--accent); margin-left: 2px; }
     .auth-footer {
-        padding: 1.25rem 2.5rem;
-        border-top: 1px solid var(--border);
-        text-align: center; font-size: 0.875rem; color: var(--text-muted);
+        padding: 1.25rem 2.5rem; border-top: 1px solid var(--border);
+        text-align: center; font-size: 0.85rem; color: var(--text-muted);
     }
     .auth-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .auth-footer a:hover { text-decoration: underline; }
-
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-    .required-star { color: var(--accent); margin-left: 2px; }
-
     .section-divider {
         font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
         font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
         color: var(--text-dim); border-top: 1px solid var(--border);
         padding-top: 1rem; margin: 1.25rem 0 1rem;
-        display: flex; align-items: center; gap: 0.5rem;
-    }
-    .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-    /* Password field wrapper */
-    .password-wrap { position: relative; }
-    .password-wrap input { padding-right: 2.75rem; }
-    .password-toggle {
-        position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
-        background: none; border: none; cursor: pointer;
-        color: var(--text-muted); padding: 0.25rem;
-        display: flex; align-items: center;
-        transition: color var(--transition);
-    }
-    .password-toggle:hover { color: var(--text); }
-
-    /* Password strength */
-    .pwd-strength {
-        display: flex; gap: 0.25rem; margin-top: 0.4rem;
-        height: 3px;
-    }
-    .pwd-strength-bar {
-        flex: 1; border-radius: 2px;
-        background: var(--border);
-        transition: background 0.3s;
-    }
-    .pwd-strength-bar.weak   { background: var(--red); }
-    .pwd-strength-bar.fair   { background: var(--accent2); }
-    .pwd-strength-bar.strong { background: var(--green); }
-
-    .pwd-hint {
-        font-size: 0.75rem; color: var(--text-muted);
-        margin-top: 0.35rem; transition: color 0.2s;
-    }
-
-    /* Trust signals */
-    .register-trust {
-        display: flex; flex-wrap: wrap; gap: 1rem;
-        margin-top: 1.25rem; padding-top: 1.25rem;
-        border-top: 1px solid var(--border);
-    }
-    .trust-badge {
-        display: flex; align-items: center; gap: 0.35rem;
-        font-size: 0.78rem; color: var(--text-dim);
-    }
-    .trust-badge svg { color: var(--green); }
-
-    @media (max-width: 480px) {
-        .auth-body { padding: 1.75rem; }
-        .auth-footer { padding: 1rem 1.75rem; }
-        .form-row { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
@@ -134,99 +41,61 @@
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-card">
-        <div class="auth-top-bar" aria-hidden="true"></div>
+        <div class="auth-top-bar"></div>
         <div class="auth-body">
-            <div class="auth-logo" aria-hidden="true">🏎️</div>
+            <div style="font-size:2.5rem;text-align:center;margin-bottom:1.25rem;">🏎️</div>
             <div class="auth-eyebrow">Nuevo piloto</div>
             <h1 class="auth-title">Crear cuenta</h1>
-            <p class="auth-subtitle">
-                Únete a la comunidad de karting. Los campos con <span class="required-star" aria-label="obligatorio">*</span> son obligatorios.
-            </p>
+            <p class="auth-subtitle">Únete a la comunidad de karting. Los campos con <span class="required-star">*</span> son obligatorios.</p>
 
-            <form method="POST" action="/register" novalidate>
+            <form method="POST" action="/register">
                 <input type="hidden" name="is_admin" value="0">
 
+                <!-- Datos personales -->
                 <div class="section-divider">Datos personales</div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="full_name">Nombre <span class="required-star" aria-hidden="true">*</span></label>
-                        <input type="text" id="full_name" name="full_name"
-                               placeholder="Fernando" required autocomplete="given-name">
+                        <label for="full_name">Nombre <span class="required-star">*</span></label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Fernando" required>
                     </div>
                     <div class="form-group">
-                        <label for="apellido">Apellidos <span class="required-star" aria-hidden="true">*</span></label>
-                        <input type="text" id="apellido" name="apellido"
-                               placeholder="Alonso Díaz" required autocomplete="family-name">
+                        <label for="apellido">Apellidos <span class="required-star">*</span></label>
+                        <input type="text" id="apellido" name="apellido" placeholder="Alonso Díaz" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="fecha_nacimiento">Fecha de nacimiento <span class="required-star" aria-hidden="true">*</span></label>
-                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento"
-                           required max="{{ today }}" style="color-scheme:dark;">
+                    <label for="fecha_nacimiento">Fecha de nacimiento <span class="required-star">*</span></label>
+                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required max="{{ today }}" style="color-scheme:dark;" placeholder="dd/mm/aaaa">
                 </div>
 
                 <div class="form-group">
-                    <label for="telefono">Teléfono <span class="required-star" aria-hidden="true">*</span></label>
-                    <input type="tel" id="telefono" name="teléfono"
-                           placeholder="+34 600 000 000" required autocomplete="tel">
+                    <label for="teléfono">Teléfono <span class="required-star">*</span></label>
+                    <input type="tel" id="teléfono" name="teléfono" placeholder="+34 600 000 000" required>
                 </div>
 
+                <!-- Cuenta -->
                 <div class="section-divider">Datos de acceso</div>
 
                 <div class="form-group">
-                    <label for="username">Apodo del piloto <span class="required-star" aria-hidden="true">*</span></label>
-                    <input type="text" id="username" name="username"
-                           placeholder="elNano_33" required autocomplete="username">
+                    <label for="username">Apodo del piloto <span class="required-star">*</span></label>
+                    <input type="text" id="username" name="username" placeholder="elNano_33" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Correo electrónico <span class="required-star" aria-hidden="true">*</span></label>
-                    <input type="email" id="email" name="email"
-                           placeholder="nano33@gmail.com" required autocomplete="email">
+                    <label for="email">Correo electrónico <span class="required-star">*</span></label>
+                    <input type="email" id="email" name="email" placeholder="nano33@gmail.com" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Contraseña <span class="required-star" aria-hidden="true">*</span></label>
-                    <div class="password-wrap">
-                        <input type="password" id="password" name="password"
-                               placeholder="Mínimo 6 caracteres" required
-                               oninput="checkStrength(this.value)"
-                               autocomplete="new-password">
-                        <button type="button" class="password-toggle"
-                                onclick="togglePwd('password', this)"
-                                aria-label="Mostrar u ocultar contraseña">
-                            <svg id="eye-password" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
-                    </div>
-                    <div class="pwd-strength" role="presentation" aria-hidden="true">
-                        <div class="pwd-strength-bar" id="bar1"></div>
-                        <div class="pwd-strength-bar" id="bar2"></div>
-                        <div class="pwd-strength-bar" id="bar3"></div>
-                        <div class="pwd-strength-bar" id="bar4"></div>
-                    </div>
-                    <div class="pwd-hint" id="pwdHint" aria-live="polite">Mínimo 6 caracteres</div>
+                    <label for="password">Contraseña <span class="required-star">*</span></label>
+                    <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.75rem;">
-                    Crear mi cuenta de piloto
+                    Crear mi cuenta
                 </button>
-
-                <div class="register-trust" role="list" aria-label="Garantías de registro">
-                    <div class="trust-badge" role="listitem">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                        Registro gratuito
-                    </div>
-                    <div class="trust-badge" role="listitem">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                        Sin tarjeta de crédito
-                    </div>
-                    <div class="trust-badge" role="listitem">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                        Datos protegidos
-                    </div>
-                </div>
             </form>
         </div>
         <div class="auth-footer">
@@ -234,44 +103,4 @@
         </div>
     </div>
 </div>
-
-<script>
-function togglePwd(fieldId, btn) {
-    const input = document.getElementById(fieldId);
-    const isHidden = input.type === 'password';
-    input.type = isHidden ? 'text' : 'password';
-    btn.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
-    const eye = btn.querySelector('svg');
-    if (eye) {
-        eye.innerHTML = isHidden
-            ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
-            : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-    }
-}
-
-function checkStrength(val) {
-    const bars = [1,2,3,4].map(i => document.getElementById('bar'+i));
-    const hint = document.getElementById('pwdHint');
-    const len  = val.length;
-    let score  = 0;
-
-    if (len >= 6)  score++;
-    if (len >= 10) score++;
-    if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-
-    bars.forEach((b, i) => {
-        b.className = 'pwd-strength-bar';
-        if (i < score) {
-            if (score <= 1) b.classList.add('weak');
-            else if (score <= 2) b.classList.add('fair');
-            else b.classList.add('strong');
-        }
-    });
-
-    const labels = ['', 'Débil — añade más caracteres', 'Regular — usa mayúsculas y números', 'Buena — añade símbolos', 'Excelente'];
-    hint.textContent = len === 0 ? 'Mínimo 6 caracteres' : (labels[score] || labels[4]);
-    hint.style.color = score <= 1 ? 'var(--red)' : score <= 2 ? 'var(--accent2)' : 'var(--green)';
-}
-</script>
 {% endblock %}

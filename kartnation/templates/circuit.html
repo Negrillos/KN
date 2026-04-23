@@ -204,16 +204,14 @@
         border-radius: 6px;
         padding: 0.65rem 0.3rem 0.55rem;
         cursor: pointer;
-        transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
+        transition: border-color 0.15s, background 0.15s;
         position: relative;
         text-align: center;
     }
 
     .slot-card:hover:not(.slot-full):not(.slot-booked):not(.slot-past) {
         border-color: var(--accent);
-        background: rgba(255,77,0,0.08);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 16px rgba(255,77,0,0.15);
+        background: rgba(255,77,0,0.07);
     }
 
     .slot-card.slot-booked {
